@@ -16,7 +16,7 @@ async def on_command_error(ctx, error):
 async def ping(ctx):
     await ctx.send('お天気ちゃんだよ～(⋈◍＞◡＜◍)。✧♡')
 @bot.command()
-async def ping(ctx):
+async def こんにちは(ctx):
     await ctx.send('お天気ちゃんだよ～(⋈◍＞◡＜◍)。✧♡')
 
 token = getenv('DISCORD_BOT_TOKEN')
