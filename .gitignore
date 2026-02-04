@@ -18,6 +18,10 @@ lib/
 lib64/
 parts/
 sdist/
+
+# Buildozer
+.buildozer/
+bin/
 var/
 wheels/
 share/python-wheels/
