@@ -1,0 +1,222 @@
+{
+  "migration": {
+    "enabledSections": {
+      "mainVisual": true,
+      "banner": true,
+      "news": true,
+      "works": true,
+      "about": true,
+      "contact": true,
+      "footer": true
+    },
+    "recommendedPhasedRollout": [
+      {
+        "step": 1,
+        "name": "banner-only",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": false,
+          "works": false,
+          "about": false,
+          "contact": false,
+          "footer": false
+        }
+      },
+      {
+        "step": 2,
+        "name": "banner-news",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": true,
+          "works": false,
+          "about": false,
+          "contact": false,
+          "footer": false
+        }
+      },
+      {
+        "step": 3,
+        "name": "banner-news-works",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": true,
+          "works": true,
+          "about": false,
+          "contact": false,
+          "footer": false
+        }
+      },
+      {
+        "step": 4,
+        "name": "banner-news-works-about",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": true,
+          "works": true,
+          "about": true,
+          "contact": false,
+          "footer": false
+        }
+      },
+      {
+        "step": 5,
+        "name": "banner-news-works-about-contact",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": true,
+          "works": true,
+          "about": true,
+          "contact": true,
+          "footer": false
+        }
+      },
+      {
+        "step": 6,
+        "name": "banner-news-works-about-contact-footer",
+        "enabledSections": {
+          "mainVisual": false,
+          "banner": true,
+          "news": true,
+          "works": true,
+          "about": true,
+          "contact": true,
+          "footer": true
+        }
+      }
+    ]
+  },
+  "mainVisualItems": [
+    {
+      "href": "#news",
+      "image": "./images/main-visual/1.jpg",
+      "title": "おしらせ"
+    },
+    {
+      "href": "#about",
+      "image": "./images/main-visual/2.jpg",
+      "title": "水咲ましろについて"
+    },
+    {
+      "href": "#works",
+      "image": "./images/main-visual/3.jpg",
+      "title": "お仕事"
+    },
+    {
+      "href": "./circle/",
+      "image": "./images/main-visual/4.jpg",
+      "title": "MashiroMIXについて"
+    }
+  ],
+  "bannerItems": [
+    {
+      "href": "https://docs.nizima.com/promotion/nl92316/?utm_source=nizima&utm_medium=top_banner&utm_campaign=NIZIMALIVE-RELEASE_CAMPAIGN",
+      "target": "_blank",
+      "image": "./images/banner/1h6Z44rc4hLZYZPTDCkXTL/4313343582edf54c92243c2cbd16aa8d/thumb/topvisual_template.jpg",
+      "title": "nizima LIVE"
+    },
+    {
+      "href": "./circle/",
+      "target": "_self",
+      "image": "./images/banner/3pHPiTLO3CORo167nR0lIl/5aeaf691828f5bc9cacbdf4054329968/thumb/mashiro-gasyu-02.jpg",
+      "title": "MashiroMIXについて"
+    },
+    {
+      "href": "https://www.youtube.com/@kanagiyasouka1932",
+      "target": "_blank",
+      "image": "./images/banner/rrTsZ6oDUE8Jw28SkiDLq/a440e61c219f0ca16377015335488ed9/thumb/banner2.jpeg",
+      "title": "華凪耶ソウカ"
+    },
+    {
+      "href": "https://www.youtube.com/@Arisu_Ruriha",
+      "target": "_blank",
+      "image": "./images/banner/4R6BqNbBShqzJzjA1UdMC1/c87f05a71111010b3e4a2ffda5523367/thumb/topvisual04.jpg",
+      "title": "亞里好るりは"
+    },
+    {
+      "href": "https://www.youtube.com/@Lei-RoseNoir",
+      "target": "_blank",
+      "image": "./images/banner/7FNeIeVUeH7jgPHRvvMcPh/8cdef482124fb6ed8f8c3dc04ab9f5fe/thumb/rei.jpeg",
+      "title": "レイ＝ロゼノワール"
+    }
+  ],
+  "newsItems": [
+    {
+      "date": "2026-03-08",
+      "text": "お知らせ 2026年3月号 を公開しました。",
+      "href": "./news-2026-03/",
+      "target": "_self"
+    },
+    {
+      "date": "2023-05-29",
+      "text": "水咲ましろ公式Webサイトを仮公開しました。現在一部工事中です。"
+    }
+  ],
+  "works": {
+    "moreHref": "./circle/",
+    "moreTarget": "_blank",
+    "movieHref": "https://www.youtube.com/watch?v=0S1NT5FNrxM",
+    "movieTarget": "_blank"
+  },
+  "about": {
+    "job": "CreaterVTuber.",
+    "name": "mashiro",
+    "nameJa": "ましろ",
+    "twitterHref": "https://twitter.com/mashiro6425",
+    "descriptions": [
+      "",
+      ""
+    ],
+    "masterpieceLabel": "代表作",
+    "masterpiece": "VTuber 「星飴あゆき」配信待機・終了画面動画制作\nVTuber 「ひめの」配信待機・終了画面制作",
+    "links": [
+      {
+        "href": "https://mashiro6425.fanbox.cc/",
+        "target": "_blank",
+        "thumb": "./images/about/links/fanbox.png",
+        "serviceName": "FANBOX"
+      },
+      {
+        "href": "https://lit.link/mashiro6425",
+        "target": "_blank",
+        "thumb": "./images/about/links/Lit.link.png",
+        "serviceName": "Lit.link(リットリンク)"
+      },
+      {
+        "href": "https://www.youtube.com/channel/UC4vAYHKWl4gUkprCOOOCt4g",
+        "target": "_blank",
+        "thumb": "./images/about/links/youtube.png",
+        "serviceName": "YouTube"
+      },
+      {
+        "href": "https://nizima.com/profile/213747",
+        "target": "_blank",
+        "thumb": "./images/about/links/nizima.png",
+        "serviceName": "nizima"
+      }
+    ]
+  },
+  "contact": {
+    "requestHtml": "ご依頼いただく際は<br />・<span>内容</span><br />・<span>稿料</span><br />・<span>納期</span><br />を必ず書いていただけると幸いです。",
+    "buttons": [
+      {
+        "href": "mailto:info@mashiromix.com",
+        "target": "_blank",
+        "text": "メールでお問い合わせ"
+      },
+      {
+        "href": "https://docs.google.com/forms/d/e/1FAIpQLScc9Bq2UJ7mhG5iioud9P-Tg024ZhqAlbEYpZ8qcHzT_oJf6A/viewform?usp=sf_link",
+        "target": "_blank",
+        "text": "Googleフォームでお問い合わせ"
+      }
+    ],
+    "smallTextHtml": "※なお、無償のご依頼は受け付けておりません。Live2Dのご依頼はnizimaよりお願い致します。<br />あらかじめご了承ください。"
+  },
+  "footer": {
+    "copyright": "© 2023 水咲ましろ/MashiroMIX."
+  }
+}
