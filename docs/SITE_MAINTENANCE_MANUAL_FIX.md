@@ -705,8 +705,8 @@ Copy-Item -Path "mashiromix.com-10\images\character\新ファイル名.png" `
 
 1. 新しいロゴ画像ファイルを用意する
 2. `mashiromix.com-10/images/character/` に配置する
-3. PowerShell で `htmllatest/images/character/` にもコピーする
-4. `CharacterList` 内の各メンバーの `logo.url` を新ファイルのパスに変更する
+3. PowerShellで`htmllatest/images/character/`にもコピーする
+4. `CharacterList`内の各メンバーの`logo.url`を新ファイルのパスに変更する
 5. 両ミラーのJSファイルを同じ内容にする
 6. 表示確認する
 
