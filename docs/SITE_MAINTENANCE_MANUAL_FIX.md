@@ -227,7 +227,7 @@
 更新手順:
 
 1. 新画像を `images/banner/...` に配置する
-2. `__NEXT_DATA__` 内 `banners` の対象要素で`url` / `thumbUrl` を変更する
+2. `__NEXT_DATA__` 内 `banners` の対象要素で `url` / `thumbUrl` を変更する
 3. `link` がある場合は一緒に変更する
 4. `sort` の順番が崩れていないか確認する
 5. 動作確認後、`mashiromix.com-10/index.html` へ同内容を反映する
@@ -330,7 +330,7 @@ WORKSページの該当カードへ遷移し、対象画像が自動表示され
 
 ### 仕組み
 
-1. トップ側で`workIndex` を持たせる
+1. トップ側で `workIndex` を持たせる
 2. 「詳細」リンクを `/works/#work-x` にする
 3. WORKSページ側カードに `id="work-1"` 形式のアンカーを付与
 4. 遷移後、該当カードをハイライト
@@ -482,7 +482,7 @@ circleページのリンクカードは、同じ形の `a` ブロックが並ん
 
 表示差異の注意（今回のFIX）:
 
-1. 画像URLが同じでも、スタイルで`scale(...)` が当たると見た目サイズが変わる
+1. 画像URLが同じでも、スタイルで `scale(...)` が当たると見た目サイズが変わる
 2. 2番目だけ大きく見える問題は、`CharacterId.koyuki` 専用スタイルが原因だった
 3. 現在は専用拡大指定を無効化済み
 
@@ -705,7 +705,7 @@ Copy-Item -Path "mashiromix.com-10\images\character\新ファイル名.png" `
 
 1. 新しいロゴ画像ファイルを用意する
 2. `mashiromix.com-10/images/character/` に配置する
-3. PowerShell で`htmllatest/images/character/` にもコピーする
+3. PowerShell で `htmllatest/images/character/` にもコピーする
 4. `CharacterList` 内の各メンバーの `logo.url` を新ファイルのパスに変更する
 5. 両ミラーのJSファイルを同じ内容にする
 6. 表示確認する
@@ -769,7 +769,7 @@ Copy-Item -Path "mashiromix.com-10\images\character\新ファイル名.png" `
 注意:
 
 1. `icon.url` と `picture.url` は、現在のデータ定義に `width` / `height` を持っていません
-2. 表示側はアイコンを円形で`100 x 100`（モバイル時 `72 x 72`）に描画します
+2. 表示側はアイコンを円形で `100 x 100`（モバイル時 `72 x 72`）に描画します
 3. このリポジトリには `images/character` 実ファイルが同梱されていないため、`icon` / `picture` の実寸はURL元で管理されています
 4. 立ち絵の見た目サイズは `illust.width` / `illust.height` に加えてCSSの `transform` でも変わるため、個別 `scale` 指定の有無を必ず確認する
 
