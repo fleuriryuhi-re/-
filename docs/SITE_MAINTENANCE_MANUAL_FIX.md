@@ -426,7 +426,10 @@ circleページのリンクカードは、同じ形の `a` ブロックが並ん
 1. `name.kana`
 1. `name.yomi`
 1. `illust.url`
+1. `illust.width`
+1. `illust.height`
 1. `icon.url`
+1. `logo.url`
 1. `social.x`
 1. `social.youtube`
 1. `social.tiktok`
@@ -453,6 +456,35 @@ circleページのリンクカードは、同じ形の `a` ブロックが並ん
 3. 変更したい項目だけを直す
 4. カンマや波かっこを崩さない
 5. 反映後に表示確認する
+
+### 9-3-1. 丸アイコンとイラストの差し替え早見表（どこを修正するか）
+
+編集対象ファイル（必ず両方）:
+
+1. `htmllatest/_next/static/chunks/pages/character-18bfe4354cceb393588a.js`
+2. `mashiromix.com-10/_next/static/chunks/pages/character-18bfe4354cceb393588a.js`
+
+修正キー:
+
+1. 丸アイコンを差し替える: 各メンバーの `icon.url`
+2. 立ち絵を差し替える: 各メンバーの `illust.url`
+3. 立ち絵表示サイズを合わせる: 各メンバーの `illust.width` と `illust.height`
+
+例（1人分）:
+
+```js
+{
+  id: CharacterId.maika,
+  illust: { url: "https://.../illust.png", width: 523, height: 1200 },
+  icon: { url: "https://.../icon.png" }
+}
+```
+
+表示差異の注意（今回のFIX）:
+
+1. 画像URLが同じでも、スタイルで `scale(...)` が当たると見た目サイズが変わる
+2. 2番目だけ大きく見える問題は、`CharacterId.koyuki` 専用スタイルが原因だった
+3. 現在は専用拡大指定を無効化済み
 
 ### 9-4. メンバー追加方法
 
@@ -487,6 +519,7 @@ circleページのリンクカードは、同じ形の `a` ブロックが並ん
 1. `status`
 2. `description`
 3. `social`
+4. `logo`（名前の上に表示するロゴ画像）
 
 既存メンバーの自己紹介だけを更新する場合は、新規追加ではなくその人の `description` だけを変更します。
 
@@ -555,6 +588,7 @@ status: [
   group: "creator",
   illust: { url: "https://example.com/illust.png", width: 523, height: 1200 },
   icon: { url: "https://example.com/icon.png" },
+  logo: { url: "/images/character/AdobeStock_526338514.png" },
   name: { kana: "表示名", yomi: "よみ" },
   social: { x: null, youtube: null, tiktok: null },
   description: "ここに自己紹介を書く",
@@ -617,7 +651,138 @@ status: [
 
 ---
 
+### 9-10. ロゴ画像の設定・差し替え方法（名前上部 アニメーション表示）
+
+#### 仕組みの概要
+
+各メンバーの名前の直上に、所属ロゴ・チャンネルロゴなどの画像を表示できます。
+ロゴはキャラ切り替え時に立ち絵と同じアニメーション（スライドイン + フェードイン）で表示されます。
+
+表示コンポーネント: `CharacterLogo`（`character-18bfe4354cceb393588a.js` 内に定義済み）
+
+#### ロゴ画像ファイルの配置場所
+
+現在のファイルパス（両ミラー共通）:
+
+```text
+htmllatest/images/character/AdobeStock_526338514.png
+mashiromix.com-10/images/character/AdobeStock_526338514.png
+```
+
+新しいロゴ画像を使う場合は、**両ミラーの同じパスに同じファイルを置いてください**。
+
+ファイルのコピーコマンド（PowerShell）:
+
+```powershell
+Copy-Item -Path "mashiromix.com-10\images\character\新ファイル名.png" `
+          -Destination "htmllatest\images\character\新ファイル名.png" -Force
+```
+
+#### CharacterList での `logo` キーの書き方
+
+各メンバーオブジェクトに `logo: { url: "..." }` を追加します。
+
+例（1人分）:
+
+```js
+{
+  id: CharacterId.maika,
+  logo: { url: "/images/character/AdobeStock_526338514.png" },
+  illust: { url: "...", width: 523, height: 1200 },
+  ...
+}
+```
+
+ルール:
+
+1. `logo.url` にパスを設定すると名前の上にロゴが表示される
+2. `logo` キー自体がなければロゴは表示されない（エラーにはならない）
+3. `logo.url` が空文字や `null` でもロゴは非表示になる
+4. 全メンバーで同じロゴ画像を使う場合は、全員に同じパスを設定する
+5. メンバーごとに別ロゴを使いたい場合は、それぞれ異なる `url` を設定する
+
+#### ロゴ画像を差し替える手順
+
+1. 新しいロゴ画像ファイルを用意する
+2. `mashiromix.com-10/images/character/` に配置する
+3. PowerShell で `htmllatest/images/character/` にもコピーする
+4. `CharacterList` 内の各メンバーの `logo.url` を新ファイルのパスに変更する
+5. 両ミラーのJSファイルを同じ内容にする
+6. 表示確認する
+
+変更対象ファイル（必ず両方）:
+
+1. `htmllatest/_next/static/chunks/pages/character-18bfe4354cceb393588a.js`
+2. `mashiromix.com-10/_next/static/chunks/pages/character-18bfe4354cceb393588a.js`
+
+#### アニメーションの仕組み（参考情報）
+
+`CharacterLogo` コンポーネントは `CharacterIllust` と同じ制御パターンで動いています。
+
+1. キャラクターが選択されると `emit = true` になる
+2. `slideIn` + `fadeIn` の2種アニメーションが `0.6s` で再生される（イージング: `cubic-bezier(0,0,0.21,1)`）
+3. アニメーション終了後に `emit = false` になり静止する
+4. 別のキャラクターを選択するとリセットされて再度アニメーションが走る
+
+調整できる値（JSチャンク内 `CharacterLogo` 関数）:
+
+1. アニメーション時間: `0.6s` の数値部分
+2. アニメーション遅延: `0s` の部分（例: `0.15s` にすると立ち絵より少し遅れて表示）
+3. 表示サイズ: `width: "min(100%,340px)"` と `maxHeight: "120px"`
+
+---
+
 ## 10. 画像ファイル管理のコツ
+
+### 10-1. 画像解像度一覧（FIX基準: 2026-03）
+
+この章の数値は、`htmllatest` 側の実ファイルと `__NEXT_DATA__` / `CharacterList` の定義値を基準にしています。
+`mashiromix.com-10` 側はミラーのため、同じ解像度で合わせて運用してください。
+
+#### トップページ（index）
+
+1. バナー本画像（`res.banners[*].image`）: `1200 x 580`
+2. バナーthumb画像（`images/banner/**/thumb/*`）: 主に `500 x 242`（一部 `500 x 250` が混在）
+3. 代替プレースホルダー（`images/banner/1.png` 〜 `6.png`）: `646 x 256`
+4. WORKS画像（`res.works[*].image`）: `580 x 280`
+
+#### circleページ（circle/index）
+
+1. circleメイン画像（`res.circle.image`）: `1479 x 1109`
+2. circleメインthumb（`images/circle/**/thumb/*`）: `500 x 375`
+3. circleページのバナー（`res.banners[*].image`）: `1200 x 580`
+4. リンクカード画像（`/images/about/links/*`）: `646 x 256`
+
+#### 所属タレントページ（character）
+
+`CharacterList` の `illust` に定義されている解像度は次の通りです。
+
+1. `maika`: `523 x 1200`
+2. `koyuki`: `523 x 1200`
+3. `kanon`: `523 x 1200`
+
+補足（同ファイル内の所属クリエイター）:
+
+1. `kurono`: `523 x 1200`
+2. `tenshi`: `523 x 1200`
+
+注意:
+
+1. `icon.url` と `picture.url` は、現在のデータ定義に `width` / `height` を持っていません
+2. 表示側はアイコンを円形で `100 x 100`（モバイル時 `72 x 72`）に描画します
+3. このリポジトリには `images/character` 実ファイルが同梱されていないため、`icon` / `picture` の実寸はURL元で管理されています
+4. 立ち絵の見た目サイズは `illust.width` / `illust.height` に加えてCSSの `transform` でも変わるため、個別 `scale` 指定の有無を必ず確認する
+
+### 10-2. 更新時の推奨解像度（崩れにくい基準）
+
+1. トップバナー: `1200 x 580` に統一（比率を揃える）
+2. バナーthumb: `500 x 242` を推奨（既存UIとの整合が取りやすい）
+3. circleリンクカード: `646 x 256` を維持（差し替え時も同じ比率）
+4. 所属タレント `illust`: 高さ `1200px` 基準で作成し、FIX運用では `523 x 1200` を第一推奨にする
+5. アイコン画像: 正方形素材（最低 `400 x 400` 推奨）を用意し、円形切り抜きで破綻しない構図にする
+6. 立ち絵を横並びで同じ見え方にしたい場合は、`illust` を `523 x 1200` で統一し、個別 `scale` を入れない
+
+### 10-3. 画像運用のコツ
 
 初心者向けのオススメ:
 
