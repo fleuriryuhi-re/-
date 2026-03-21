@@ -769,7 +769,7 @@
 
       const panelSub = document.querySelector(".panel-sub");
       if (panelSub) {
-        panelSub.innerHTML = "News作成・更新・編集・削除のみ提供します。<br>他ページの増設・更新は README.md の手順を参照してください。";
+        panelSub.innerHTML = "News作成・更新・編集・削除のみ提供します。<br>他ページの増設・更新は FIX版マニュアルを参照してください。";
       }
 
       const templateType = byId("templateType");
@@ -825,7 +825,7 @@
       const notice = document.createElement("div");
       notice.className = "preset-hint";
       notice.style.marginTop = "10px";
-      notice.innerHTML = "他ページ増設・レイアウト追加は README.md を参照してください。";
+      notice.innerHTML = "他ページ増設・レイアウト追加は FIX版マニュアルを参照してください。";
       const status = byId("status");
       status?.parentElement?.insertBefore(notice, status);
     }

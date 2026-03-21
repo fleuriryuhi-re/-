@@ -144,6 +144,7 @@
             t = n.isActive,
             o = n.illust,
             a = n.illustDark,
+            u = n.link,
             r = n.onClick,
             s = (0, e.useState)(!1),
             c = s[0],
@@ -163,8 +164,17 @@
             ref: function () {
               p(l()().hour() >= 19 || l()().hour() <= 5)
             },
-            children: (0, d.jsx)(g, {
-              src: c && a ? a : o
+              children: (0, d.jsxs)(d.Fragment, {
+                children: [(0, d.jsx)(g, {
+                  src: c && a ? a : o
+                }), (0, d.jsx)(linkAnchor, {
+                  href: u || "#",
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  onClick: function (n) {
+                    n.stopPropagation()
+                  }
+                })]
             })
           })
         }
@@ -180,6 +190,10 @@
             displayName: "Illust__Image",
             componentId: "sc-19znc2x-1"
           })(["display:block;position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"]),
+          linkAnchor = a.ZP.a.withConfig({
+            displayName: "Illust__LinkAnchor",
+            componentId: "sc-19znc2x-2"
+          })(["position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"]),
           h = "draw-text1__mask-id";
         var f = a.ZP.svg.attrs({
             viewBox: "0 0 1163.6 203.1"
@@ -303,19 +317,13 @@
           T = [{
             num: 0,
             illust: "/images/main-visual/1.jpg",
-            illustDark: "/images/main-visual/1--dark.jpg"
+            illustDark: "/images/main-visual/1--dark.jpg",
+            link: "/character/"
           }, {
             num: 1,
             illust: "/images/main-visual/2.jpg",
-            illustDark: "/images/main-visual/2--dark.jpg"
-          }, {
-            num: 2,
-            illust: "/images/main-visual/3.jpg",
-            illustDark: "/images/main-visual/3--dark.jpg"
-          }, {
-            num: 3,
-            illust: "/images/main-visual/4.jpg",
-            illustDark: "/images/main-visual/4--dark.jpg"
+            illustDark: "/images/main-visual/2--dark.jpg",
+            link: "/circle/"
           }];
   
         function W(n) {
@@ -351,12 +359,14 @@
             children: [T.map((function (n) {
               var i = n.num,
                 t = n.illust,
-                e = n.illustDark;
+                e = n.illustDark,
+                o = n.link;
               return (0, d.jsx)(p, {
                 num: i,
                 isActive: i === s,
                 illust: t,
                 illustDark: e,
+                link: o,
                 onClick: c
               }, i)
             })), (0, d.jsx)(E, {
@@ -1191,14 +1201,15 @@
                 columnClassName: "works__masonry-column",
                 children: i.sort((function (n, i) {
                   return l()(i.publishedAt).unix() - l()(n.publishedAt).unix()
-                })).map((function (n, i) {
+                })).slice(0, Math.max(0, i.length - 1)).map((function (n, i) {
                   return (0, d.jsx)(Ai, {
                     work: n,
+                    workIndex: i + 1,
                     onClick: t
                   }, "".concat(i, "-").concat(n.image.title))
                 }))
               }), (0, d.jsx)("a", {
-                href: "https://google.com/",
+                href: "/works/",
                 target: "_blank",
                 children: (0, d.jsx)(Ii, {
                   children: "MORE"
@@ -1211,16 +1222,17 @@
         function Ai(n) {
           var i = n.work,
             t = n.onClick,
-            e = (0, M.YD)({
+            e = n.workIndex,
+            o = (0, M.YD)({
               rootMargin: "0px 0px -200px",
               triggerOnce: !0
             }),
-            o = (0, r.Z)(e, 2),
-            a = o[0],
-            s = o[1];
+            a = (0, r.Z)(o, 2),
+            s = a[0],
+            c = a[1];
           return (0, d.jsx)(Si, {
-            ref: a,
-            isIntersected: s,
+            ref: s,
+            isIntersected: c,
             onClick: function (n) {
               function i() {
                 return n.apply(this, arguments)
@@ -1229,7 +1241,9 @@
                 return n.toString()
               }, i
             }((function () {
-              return t(i)
+              return t(Object.assign({}, i, {
+                worksAnchor: "work-".concat(e)
+              }))
             })),
             children: (0, d.jsx)(Yi, {
               image: i.image
@@ -1400,7 +1414,7 @@
                   }), (0, d.jsx)("br", {}), "を必ず書いていただけると幸いです。"]
                 }), (0, d.jsxs)(ot, {
                   children: [(0, d.jsx)("a", {
-                    href: "info@mashiromix.com",
+                    href: "mailto:info@mashiromix.com",
                     target: "_blank",
                     children: (0, d.jsx)(at, {
                       children: "メールでお問い合わせ"
@@ -1411,10 +1425,7 @@
                     children: (0, d.jsx)(at, {
                       children: "Googleフォームでお問い合わせ"
                     })
-
                   })]
-
-
                 }), (0, d.jsxs)(st, {
                   ref: s,
                   isIntersected: c,
@@ -1483,7 +1494,7 @@
           if (null === i) return null;
           var e = i.image,
             o = i.detail,
-            a = i.link,
+            a = i.worksAnchor ? "/works/#".concat(i.worksAnchor) : "/works/",
             r = i.publishedAt;
           return (0, d.jsxs)(dt, {
             children: [(0, d.jsx)(lt, {}), (0, d.jsx)(pt, {
@@ -1722,11 +1733,12 @@
             g = m[0],
             h = m[1];
           return (0, e.useEffect)((function () {
-            Promise.all([Rt("/images/main-visual/1.jpg"), Rt("/images/main-visual/1--dark.jpg"), Rt("/images/main-visual/2.jpg"), Rt("/images/main-visual/2--dark.jpg"), Rt("/images/main-visual/3.jpg"), Rt("/images/main-visual/3--dark.jpg"), Rt("/images/main-visual/4.jpg"), Rt("/images/main-visual/4--dark.jpg"), Rt("/images/about/vtuber.png"), Rt("/images/about/vtuber-bg.png"), Rt("/images/about/vtuber-sd.png"), Rt("/images/menu/about.svg"), Rt("/images/menu/character.svg"), Rt("/images/menu/circle.svg"), Rt("/images/menu/contact.svg"), Rt("/images/menu/news.svg"), Rt("/images/menu/works.svg"), Rt("/images/menu/share.svg"), Rt("/images/menu/facebook.svg"), Rt("/images/menu/twitter.svg")]).then((function () {
+            var n = function () {
               setTimeout((function () {
                 p(!1)
               }), 1200)
-            }))
+            };
+            Promise.all([Rt("/images/main-visual/1.jpg"), Rt("/images/main-visual/1--dark.jpg"), Rt("/images/main-visual/2.jpg"), Rt("/images/main-visual/2--dark.jpg"), Rt("/images/about/vtuber.png"), Rt("/images/about/vtuber-bg.png"), Rt("/images/about/vtuber-sd.png"), Rt("/images/menu/about.svg"), Rt("/images/menu/character.svg"), Rt("/images/menu/circle.svg"), Rt("/images/menu/contact.svg"), Rt("/images/menu/news.svg"), Rt("/images/menu/works.svg"), Rt("/images/menu/share.svg"), Rt("/images/menu/facebook.svg"), Rt("/images/menu/twitter.svg")]).then(n, n)
           }), []), (0, d.jsxs)(d.Fragment, {
             children: [(0, d.jsx)(o.Z, {
               title: "mashiromix.com｜web site by 水咲ましろ"

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html><head>
+<html>
+<head>
     <!-- Google Tag Manager -->
     <script>
     (function (w, d, s, l, i) {
@@ -8,35 +9,35 @@
                     new Date().getTime(), event: 'gtm.js'
             }); var f = d.getElementsByTagName(s)[0],
                 j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-                    'https://www.googletagmanager.com/gtm.js?id=%27+i+dl;f.parentNode.insertBefore(j,f);
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
         })(window, document, 'script', 'dataLayer', 'GTM-T6M7NVT');</script>
     <!-- End Google Tag Manager -->
-    <meta name="viewport" content="width=device-width">
-    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <meta charSet="utf-8" />
     <title>CIRCLE mashiromix.com｜web site by 水咲ましろ</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="application-name" content="mashiromix.com｜web site by 水咲ましろ">
-    <meta name="keywords" content="mashiro,ましろ,水咲ましろ,水咲,mashiromix,MashiroMIX,VTuber,vtuber">
-    <meta name="theme-color" content="#e71770">
-    <meta name="description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。">
-    <meta name="thumbnail" content="https://mashiromix.com/webclip.jpg">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="webclip.jpg">
-    <link rel="icon" type="image/png" href="webclip.jpg">
-    <link rel="canonical" href="https://mashiromix.com/">
-    <meta property="og:url" content="https://mashiromix.com/">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="CIRCLE mmashiromix.com｜web site by 水咲ましろ">
-    <meta property="og:image" content="https://mashiromix.com/ogp.png">
-    <meta property="og:description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。">
-    <meta property="og:site_name" content="mashiromix.com｜web site by 水咲ましろ">
-    <meta property="og:locale" content="ja_JP">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@mashiro">
-    <meta name="twitter:url" content="https://mashiromix.com/">
-    <meta name="twitter:title" content="CIRCLE mashiromix.com｜web site by 水咲ましろ">
-    <meta name="twitter:description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。">
-    <meta name="twitter:image" content="https://mashiromix.com/ogp.png">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="application-name" content="mashiromix.com｜web site by 水咲ましろ" />
+    <meta name="keywords" content="mashiro,ましろ,水咲ましろ,水咲,mashiromix,MashiroMIX,VTuber,vtuber" />
+    <meta name="theme-color" content="#e71770" />
+    <meta name="description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。" />
+    <meta name="thumbnail" content="../images/logo/favicon-256.png?v=20260320c" />
+    <link rel="shortcut icon" href="../favicon.ico?v=20260320c" />
+    <link rel="apple-touch-icon" href="../images/logo/apple-touch-icon.png?v=20260320c" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/logo/favicon-32.png?v=20260320c" />
+    <link rel="canonical" href="https://mashiromix.com/" />
+    <meta property="og:url" content="https://mashiromix.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CIRCLE mmashiromix.com｜web site by 水咲ましろ" />
+    <meta property="og:image" content="https://mashiromix.com/ogp.png" />
+    <meta property="og:description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。" />
+    <meta property="og:site_name" content="mashiromix.com｜web site by 水咲ましろ" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@mashiro" />
+    <meta name="twitter:url" content="https://mashiromix.com/" />
+    <meta name="twitter:title" content="CIRCLE mashiromix.com｜web site by 水咲ましろ" />
+    <meta name="twitter:description" content="VTuber「水咲ましろ」のWEBサイトです。活動の情報公開をしています。" />
+    <meta name="twitter:image" content="https://mashiromix.com/ogp.png" />
     <script>
         (function (d) {
             var config = {
@@ -74,14 +75,59 @@
         gtag('config', 'G-8RR2LB0LZL');
     </script>
     <style>
-        html {
+        #builderBackToTop {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 9999;
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 999px;
+            background: #e71770;
+            color: #ffffff;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+        }
+
+        #builderBackToTop.is-visible {
+            opacity: 0.95;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #builderBackToTop:hover {
+            opacity: 1;
+        }
+
+        .MenuHeader__Wrapper-sc-51sgvw-0 > a {
+            display: block;
+            width: 210px;
+            height: 36px;
+            background: center / contain no-repeat url('../images/logo/realive-tailwind.png');
+        }
+
+        .MenuHeader__Wrapper-sc-51sgvw-0 > a > svg {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .MenuHeader__Wrapper-sc-51sgvw-0 > a {
+                height: 30px;
+            }
         }
 
         body {
             opacity: 0;
         }
     </style>
-    <meta name="next-head-count" content="30">
+    <meta name="next-head-count" content="30" />
     <noscript data-n-css=""></noscript>
     <script defer="" nomodule="" src="/_next/static/chunks/polyfills-a40ef1678bae11e696dba45124eadd70.js"></script>
     <script src="/_next/static/chunks/webpack-af28476a2e7790fd48db.js" defer=""></script>
@@ -303,9 +349,12 @@
         </div>
         <div class="MenuHeader__Wrapper-sc-51sgvw-0 godVWD">
             <a href="/">
-                <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="168.000000pt" height="55.000000pt" viewBox="0 0 168.000000 55.000000" preserveAspectRatio="xMidYMid meet">
+                <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+                     width="168.000000pt" height="55.000000pt" viewBox="0 0 168.000000 55.000000"
+                     preserveAspectRatio="xMidYMid meet">
 
-                    <g transform="translate(0.000000,55.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none">
+                    <g transform="translate(0.000000,55.000000) scale(0.100000,-0.100000)"
+                       fill="#000000" stroke="none">
                         <path d="M527 384 c-4 -4 -7 -45 -7 -91 0 -75 2 -84 18 -81 11 2 19 15 22 37 6 41 30 55 30 18 0 -36 10 -57 26 -57 10 0 14 13 14 43 0 53 -19 82 -48 75 -17 -5 -21 -1 -24 25 -3 30 -17 44 -31 31z
 M115 371 c-9 -16 -35 -119 -35 -142 0 -32 34 -19 41 16 l6 30 13 -32 c15 -41 38 -42 51 -3 13 36 29 39 29 6 0 -24 25 -54 37 -43 6 7 -17 151 -28 169 -9 15 -39 3 -39 -16 0 -8 -5 -27 -11 -43 l-11 -28 -12 44 c-11 44 -28 62 -41 42z
 M663 358 c2 -7 10 -13 17 -13 7 0 15 6 18 13 2 7 -5 12 -18 12 -13 0 -20 -5 -17 -12z
@@ -319,12 +368,13 @@ M960 323 c0 -5 7 -17 15 -27 13 -18 13 -22 -7 -43 -16 -18 -19 -26 -10 -35 9 -9 16
 M1210 308 c-23 -25 -26 -70 -6 -87 22 -18 80 -10 84 11 3 15 -2 17 -26 12 -32 -7 -46 5 -36 31 5 11 15 15 31 12 30 -6 41 12 18 30 -26 18 -41 16 -65 -9z
 M1332 314 c-25 -17 -31 -71 -10 -92 20 -20 65 -14 82 10 21 30 20 54 -4 78 -24 24 -38 25 -68 4z m48 -43 c0 -24 -18 -37 -31 -24 -13 13 -1 43 17 43 8 0 14 -9 14 -19z
 M1433 315 c-2 -7 -3 -32 -1 -56 2 -32 8 -45 21 -47 13 -3 17 3 17 25 0 53 18 60 25 10 10 -64 35 -65 35 -2 0 57 16 58 27 3 12 -61 39 -59 34 2 -5 72 -11 77 -87 77 -43 0 -67 -4 -71 -12z
-M1117 224 c-9 -10 2 -24 19 -24 8 0 14 7 14 15 0 15 -21 21 -33 9z"></path>
+M1117 224 c-9 -10 2 -24 19 -24 8 0 14 7 14 15 0 15 -21 21 -33 9z" />
                     </g>
                 </svg>
 
             </a>
         </div>
+        <button id="builderBackToTop" type="button" aria-label="ページ上部に戻る" title="ページ上部に戻る">↑</button>
     </div>
     <script id="__NEXT_DATA__" type="application/json">
                 {
@@ -417,7 +467,7 @@ M1117 224 c-9 -10 2 -24 19 -24 8 0 14 7 14 15 0 15 -21 21 -33 9z"></path>
                             }
                         ],
                         "circle": {
-                            "description": "MashiroMIXは「水咲ましろ」個人が手がけるVTuberで構成されているクリエイティブサークルです。\nその他VTuber様向けの自作PCの制作及び受注・修理・改装も行なっております。\n\n主な物は\n・Live2Dモデリング\n・VTuber様向け動画制作、他動画制作\n・画像制作\n・VTuber様向けの自作PC制作及び修理改装\n※現在VTuber様向けの自作PC組み立て及びメーカー製PC・自作PCの改修や修理を募集しております。是非一度お問合せください。\n・随時動画制作受付も行なっております。是非ご連絡ください！\n\nーMashiroMIXメンバー紹介ー\n水咲ましろ 主宰\nTwitter:@mashiro6425\nオルクス・ユウディール Live2Dモデラー\nTwitter:@Orcus_yudeal\n赤狂ユウ イラストレーター\nTwiter:@Yuu_Akakura",
+                            "description": "MashiroMIXは「水咲ましろ」個人が手がけるクリエイティブサークルです。\nその他VTuber様向けの自作PCの制作及び受注・修理・改装も行なっております。\n主な物は\n・Live2Dモデリング\n・VTuber様向け動画制作、他動画制作\n・画像制作\n・VTuber様向けの自作PC制作及び修理改装\n※現在VTuber様向けの自作PC組み立て及びメーカー製PC・自作PCの改修や修理を募集しております。是非一度お問合せください。\n・随時動画制作受付も行なっております。是非ご連絡ください！\nーMashiroMIXメンバー紹介ー\n水咲ましろ 主宰\nTwitter:@mashiro6425\nオルクス・ユウディール Live2Dモデラー\nTwitter:@Orcus_yudeal\n赤狂ユウ 絵描メンバー\nTwiter:@Yuu_Akakura",
                             "image": {
                                 "url": "/images/circle/76wtbRbIqKJOOZfYuMNWst/373a394de5060e82af0002abc0660551/S__92086275.jpg",
                                 "thumbUrl": "/images/circle/76wtbRbIqKJOOZfYuMNWst/373a394de5060e82af0002abc0660551/thumb/S__92086275.jpg",
@@ -558,5 +608,15 @@ M1117 224 c-9 -10 2 -24 19 -24 8 0 14 7 14 15 0 15 -21 21 -33 9z"></path>
             "scriptLoader": []
         }
     </script>
-
-</body></html>
+    <script>
+    (function(){
+        var btn=document.getElementById('builderBackToTop');
+        if(!btn)return;
+        function check(){btn.classList.toggle('is-visible',window.scrollY>240);}
+        btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+        window.addEventListener('scroll',check,{passive:true});
+        check();
+    })();
+    </script>
+</body>
+</html>

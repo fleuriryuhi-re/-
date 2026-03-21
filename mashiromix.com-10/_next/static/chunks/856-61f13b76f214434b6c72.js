@@ -30,7 +30,7 @@
                 emit: i
               })
             }), (0, s.jsx)(m, {
-              children: "\xa9 2023 水咲ましろ/MashiroMIX."
+              children: "\xa9 2026 Re:ALive for TailWind."
             })]
           })
         })
@@ -60,9 +60,9 @@
       });
       var n = c(9008),
         i = c(5893),
-        e = "https://mashiromix.com/",
-        a = "mashiromix.com｜ web site by 水咲ましろ",
-        o = "VTuber「水咲ましろ」公式サイトです。活動情報など発信しております。";
+        e = "./",
+        a = "Re:ALive for TailWind",
+        o = "Re:ALive for TailWind の公式サイトです。活動情報など発信しております。";
 
       function s(l) {
         var t = l.title;
@@ -77,7 +77,7 @@
             content: a
           }), (0, i.jsx)("meta", {
             name: "keywords",
-            content: "mashiro,ましろ,水咲ましろ,水咲,mashiromix,MashiroMIX,VTuber,vtuber"
+            content: "realive,tailwind,Re:ALive,TailWind,VTuber,vtuber"
           }), (0, i.jsx)("meta", {
             name: "theme-color",
             content: "#e71770"
@@ -86,17 +86,18 @@
             content: o
           }), (0, i.jsx)("meta", {
             name: "thumbnail",
-            content: "".concat(e, "webclip.jpg")
+            content: "".concat(e, "images/logo/favicon-256.png?v=20260320c")
           }), (0, i.jsx)("link", {
             rel: "shortcut icon",
-            href: "favicon.ico"
+            href: "/favicon.ico?v=20260320c"
           }), (0, i.jsx)("link", {
             rel: "apple-touch-icon",
-            href: "webclip.jpg"
+            href: "/images/logo/apple-touch-icon.png?v=20260320c"
           }), (0, i.jsx)("link", {
             rel: "icon",
             type: "image/png",
-            href: "webclip.jpg"
+            sizes: "32x32",
+            href: "/images/logo/favicon-32.png?v=20260320c"
           }), (0, i.jsx)("link", {
             rel: "canonical",
             href: e
@@ -726,7 +727,7 @@
             }), (0, e.jsxs)(T, {
               onClick: i("#about"),
               children: [(0, e.jsx)(W, {}), (0, e.jsx)(E, {
-                children: "水咲ましろについて"
+                children: "代表及びRe:Alive for TailWind について"
               })]
             }), (0, e.jsxs)(T, {
               onClick: i("#works"),
@@ -737,7 +738,13 @@
               href: "/circle",
               onClick: n,
               children: [(0, e.jsx)(H, {}), (0, e.jsx)(E, {
-                children: "MashiroMIXについて"
+                children: "Re:ALive for TailWindについて"
+              })]
+            }), (0, e.jsxs)(T, {
+              href: "/character",
+              onClick: n,
+              children: [(0, e.jsx)(S, {}), (0, e.jsx)(E, {
+                children: "所属タレント"
               })]
             }), (0, e.jsxs)(T, {
               onClick: i("#contact"),
@@ -750,10 +757,10 @@
               children: (0, e.jsx)(q, {})
             }), (0, e.jsxs)(R, {
               children: [(0, e.jsx)(X, {
-                href: L.twitterShare("", "https://mashiromix.com/"),
+                href: L.twitterShare("", "./"),
                 target: "_blank"
               }), (0, e.jsx)(J, {
-                href: L.facebookShare("https://mashiromix.com/"),
+                href: L.facebookShare("./"),
                 target: "_blank"
               })]
             })]
@@ -764,10 +771,13 @@
           displayName: "MenuDesktop__Wrapper",
           componentId: "sc-1p1izu0-0"
         })(["display:grid;grid-row-gap:50px;justify-items:start;align-content:center;width:250px;height:100%;background:var(--color-white);"]),
-        Z = (0, n.ZP)(z.W).withConfig({
+        Z = n.ZP.img.attrs({
+          src: "/images/logo/realive-tailwind.png",
+          alt: "Re:ALive for TailWind"
+        }).withConfig({
           displayName: "MenuDesktop__StyledLogo",
           componentId: "sc-1p1izu0-1"
-        })(["justify-self:center;width:210px;cursor:pointer;margin-top:-20px;"]),
+        })(["justify-self:center;width:210px;cursor:pointer;margin-top:-14px;position:relative;top:4px;"]),
         D = n.ZP.div.withConfig({
           displayName: "MenuDesktop__MenuList",
           componentId: "sc-1p1izu0-2"
@@ -870,7 +880,7 @@
             }), (0, e.jsxs)($, {
               onClick: c("#about"),
               children: [(0, e.jsx)(cl, {}), (0, e.jsx)(ol, {
-                children: "水咲ましろについて"
+                children: "代表及びRe:Alive for TailWind について"
               })]
             }), (0, e.jsxs)($, {
               onClick: c("#works"),
@@ -881,7 +891,13 @@
               href: "/circle",
               onClick: t,
               children: [(0, e.jsx)(el, {}), (0, e.jsx)(ol, {
-                children: "MashiroMIXについて"
+                children: "Re:ALive for TailWindについて"
+              })]
+            }), (0, e.jsxs)($, {
+              href: "/character",
+              onClick: t,
+              children: [(0, e.jsx)(il, {}), (0, e.jsx)(ol, {
+                children: "所属タレント"
               })]
             }), (0, e.jsxs)($, {
               onClick: c("#contact"),
@@ -894,10 +910,10 @@
               children: (0, e.jsx)(hl, {})
             }), (0, e.jsxs)(dl, {
               children: [(0, e.jsx)(ml, {
-                href: L.twitterShare("", "https://mashiromix.com/"),
+                href: L.twitterShare("", "./"),
                 target: "_blank"
               }), (0, e.jsx)(vl, {
-                href: L.facebookShare("https://mashiromix.com/"),
+                href: L.facebookShare("./"),
                 target: "_blank"
               })]
             })]
@@ -1028,10 +1044,13 @@
           displayName: "MenuHeader__Wrapper",
           componentId: "sc-51sgvw-0"
         })(["box-sizing:border-box;position:fixed;top:0;left:0;width:100%;display:grid;grid-template-columns:repeat(2,auto);justify-content:space-between;align-items:center;height:70px;padding:0 24px;z-index:10;", "{height:56px;padding:0 12px;}"], i.BC.smallDown),
-        yl = (0, n.ZP)(z.W).withConfig({
+        yl = n.ZP.img.attrs({
+          src: "/images/logo/realive-tailwind.png",
+          alt: "Re:ALive for TailWind"
+        }).withConfig({
           displayName: "MenuHeader__StyledPlainLogo",
           componentId: "sc-51sgvw-1"
-        })(["height:36px;cursor:pointer;", "{height:30px;}"], i.BC.smallDown),
+        })(["height:36px;cursor:pointer;position:relative;top:3px;", "{height:30px;top:2px;}"], i.BC.smallDown),
         wl = (0, n.ZP)(o).withConfig({
           displayName: "MenuHeader__StyledMenuButton",
           componentId: "sc-51sgvw-2"
@@ -1422,7 +1441,7 @@
             emit: i
           }), (0, a.jsx)(v, {
             emit: i,
-            children: "水咲ましろについて"
+            children: "代表及びRe:Alive for TailWind について"
           })]
         })
       }
@@ -1686,7 +1705,7 @@
             emit: i
           }), (0, a.jsx)(v, {
             emit: i,
-            children: "MashiroMIXについて"
+            children: "Re:ALive for TailWindについて"
           })]
         })
       }

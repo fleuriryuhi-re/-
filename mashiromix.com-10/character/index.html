@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta charset="utf-8" />
+    <title>CHARACTER | mashiromix.com｜web site by 水咲ましろ</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="theme-color" content="#e71770" />
+    <style>
+        #builderBackToTop {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 9999;
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 999px;
+            background: #e71770;
+            color: #ffffff;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+        }
+
+        #builderBackToTop.is-visible {
+            opacity: 0.95;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #builderBackToTop:hover {
+            opacity: 1;
+        }
+
+        body { opacity: 0; }
+    </style>
+    <meta name="next-head-count" content="5" />
+    <noscript data-n-css=""></noscript>
+    <script defer="" nomodule="" src="/_next/static/chunks/polyfills-a40ef1678bae11e696dba45124eadd70.js"></script>
+    <script src="/_next/static/chunks/webpack-af28476a2e7790fd48db.js" defer=""></script>
+    <script src="/_next/static/chunks/framework-2191d16384373197bc0a.js" defer=""></script>
+    <script src="/_next/static/chunks/main-8d15616dad332ac01c02.js" defer=""></script>
+    <script src="/_next/static/chunks/pages/_app-9be1dd16a7d151e44696.js" defer=""></script>
+    <script src="/_next/static/chunks/493-a064e3aa182b00825c17.js" defer=""></script>
+    <script src="/_next/static/chunks/856-61f13b76f214434b6c72.js" defer=""></script>
+    <script src="/_next/static/chunks/pages/character-18bfe4354cceb393588a.js" defer=""></script>
+    <script src="/_next/static/17sztoczVjRD3W4-noKvV/_buildManifest.js" defer=""></script>
+    <script src="/_next/static/17sztoczVjRD3W4-noKvV/_ssgManifest.js" defer=""></script>
+</head>
+<body>
+    <div id="__next"></div>
+    <button id="builderBackToTop" type="button" aria-label="ページ上部に戻る" title="ページ上部に戻る">↑</button>
+    <script>
+    (function(){
+        var btn=document.getElementById('builderBackToTop');
+        if(!btn)return;
+        function check(){btn.classList.toggle('is-visible',window.scrollY>240);}
+        btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+        window.addEventListener('scroll',check,{passive:true});
+        check();
+    })();
+    </script>
+    <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{},"__N_SSG":true},"page":"/character","query":{},"buildId":"17sztoczVjRD3W4-noKvV","isFallback":false,"gsp":true,"scriptLoader":[]}</script>
+</body>
+</html>
