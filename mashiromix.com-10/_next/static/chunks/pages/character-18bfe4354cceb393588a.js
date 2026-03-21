@@ -332,20 +332,21 @@
         })(["position:relative;width:420px;", " ", "{width:280px;", "}&::before{--width:590;--height:1200;content:'';display:block;padding-top:calc(var(--height) / var(--width) * 100%);}"], (function (i) {
           return i.emit && (0, styled.iv)(["opacity:0;transform:translateY(18px);animation:0.6s cubic-bezier(0,0,0.21,1) 0s forwards;animation-name:slideIn,fadeIn;"]);
         }), breakpoint.BC.smallDown, (function (i) {
-          return i.characterId === CharacterId.koyuki && (0, styled.iv)(["margin-bottom:60px;"]);
+          return !1;
         })),
         IllustImage = styled.ZP.img.withConfig({
           displayName: "Illust__Image",
           componentId: "sc-1poftpg-1"
         })(["display:block;position:absolute;top:0;left:50%;height:100%;transform-origin:top;transform:translateX(-50%);", ""], (function (i) {
-          return i.characterId === CharacterId.koyuki && (0, styled.iv)(["transform:translateX(-50%) scale(1.15);"]);
+          return !1;
         }));
 
       var CharacterList = [{
         id: CharacterId.maika,
         group: "talent",
-        illust: { url: "https://karory.net/images/character/maika/illust.png", width: 590, height: 1200 },
-        icon: { url: "https://karory.net/images/character/maika/icon.png" },
+        illust: { url: "https://karory.net/images/character/tenshi/illust.png", width: 523, height: 1200 },
+        icon: { url: "https://karory.net/images/character/tenshi/icon.png" },
+        logo: { url: "/images/character/AdobeStock_526338514.png" },
         name: { kana: "蒼海 舞香", yomi: "あおみ まいか" },
         social: { x: null, youtube: null, tiktok: null },
         description: "準備中",
@@ -354,8 +355,9 @@
       }, {
         id: CharacterId.koyuki,
         group: "talent",
-        illust: { url: "https://karory.net/images/character/koyuki/illust.png", width: 443, height: 1200 },
-        icon: { url: "https://karory.net/images/character/koyuki/icon.png" },
+        illust: { url: "https://karory.net/images/character/tenshi/illust.png", width: 523, height: 1200 },
+        icon: { url: "https://karory.net/images/character/kurono/icon.png" },
+        logo: { url: "/images/character/AdobeStock_526338514.png" },
         name: { kana: "月石 来雪", yomi: "つきいし こゆき" },
         social: { x: null, youtube: null, tiktok: null },
         description: "準備中",
@@ -364,8 +366,9 @@
       }, {
         id: CharacterId.kanon,
         group: "talent",
-        illust: { url: "https://karory.net/images/character/kanon/illust.png", width: 523, height: 1200 },
-        icon: { url: "https://karory.net/images/character/kanon/icon.png" },
+        illust: { url: "https://karory.net/images/character/tenshi/illust.png", width: 523, height: 1200 },
+        icon: { url: "https://karory.net/images/character/tenshi/icon.png" },
+        logo: { url: "/images/character/AdobeStock_526338514.png" },
         name: { kana: "蒼海 夏音", yomi: "あおみ かのん" },
         social: { x: null, youtube: null, tiktok: null },
         description: "準備中",
@@ -376,6 +379,7 @@
         group: "creator",
         illust: { url: "https://karory.net/images/character/kurono/illust.png", width: 523, height: 1200 },
         icon: { url: "https://karory.net/images/character/kurono/icon.png" },
+        logo: { url: "/images/character/AdobeStock_526338514.png" },
         name: { kana: "クロノ", yomi: "くろの" },
         social: { x: null, youtube: null, tiktok: null },
         description: "時空に留まる謎の多い少女・・・\n    最近ネコミミメイド服が密かにお気に入り",
@@ -386,6 +390,7 @@
         group: "creator",
         illust: { url: "https://karory.net/images/character/tenshi/illust.png", width: 523, height: 1200 },
         icon: { url: "https://karory.net/images/character/tenshi/icon.png" },
+        logo: { url: "/images/character/AdobeStock_526338514.png" },
         name: { kana: "天使ちゃん", yomi: "てんしちゃん" },
         social: { x: null, youtube: null, tiktok: null },
         description: "天界からやってきた女神の使い\n    家事が得意でとっても甘やかしてくれる",
@@ -405,6 +410,42 @@
         });
       }
 
+      function CharacterLogo(i) {
+        var id = i.id,
+          logo = i.logo,
+          name = i.name,
+          animateState = (0, e.useState)(!0),
+          emit = animateState[0],
+          setEmit = animateState[1];
+        return (0, e.useEffect)((function () {
+          setEmit(!0);
+        }), [id]), logo && logo.url ? (0, jsx.jsx)("div", {
+          onAnimationEnd: function () { return setEmit(!1); },
+          style: {
+            display: "grid",
+            justifyItems: "center",
+            marginBottom: "8px",
+            opacity: emit ? 0 : 1,
+            transform: emit ? "translateY(18px)" : "none",
+            animation: emit ? "0.6s cubic-bezier(0,0,0.21,1) 0s forwards" : "none",
+            animationName: emit ? "slideIn,fadeIn" : "none"
+          },
+          children: (0, jsx.jsx)("img", {
+            src: logo.url,
+            alt: ((name && name.kana) || "character") + " logo",
+            style: {
+              width: "min(100%,340px)",
+              maxHeight: "120px",
+              objectFit: "contain",
+              pointerEvents: "none",
+              userSelect: "none",
+              filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.16))"
+            },
+            onError: function (i) { i.currentTarget.style.display = "none"; }
+          })
+        }) : null;
+      }
+
       var DescriptionWrapper = styled.ZP.div.withConfig({ displayName: "Description__Wrapper", componentId: "sc-1p9v8rb-0" })(["font-size:18px;line-height:32px;color:var(--color-black);white-space:pre-line;", "{font-size:16px;line-height:28px;}", ""], breakpoint.BC.smallDown, (function (i) { return i.emit && (0, styled.iv)(["opacity:0;transform:translateY(12px);animation:0.6s cubic-bezier(0,0,0.21,1) 0.3s forwards;animation-name:slideIn,fadeIn;"]); }));
 
       function CharacterGroupSection(i) {
@@ -417,7 +458,7 @@
           current = items.find((function (i) { return i.id === currentId; }));
         return current ? (0, jsx.jsxs)("section", {
           style: { display: "grid", rowGap: "28px", width: "100%", maxWidth: "1120px", padding: "clamp(20px,4vw,32px)", background: "rgba(255,255,255,0.84)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "32px", boxSizing: "border-box", boxShadow: "0 18px 48px rgba(0,0,0,0.06)" },
-          children: [(0, jsx.jsxs)("div", { style: { display: "grid", rowGap: "8px" }, children: [(0, jsx.jsx)("div", { style: { fontSize: "28px", fontWeight: "700", lineHeight: "1.4", color: "var(--color-black)" }, children: title }), description && (0, jsx.jsx)("div", { style: { fontSize: "14px", lineHeight: "1.9", color: "rgba(0,0,0,0.68)" }, children: description })] }), (0, jsx.jsx)(CharacterIcons, { currentId: currentId, icons: icons, changeCharater: changeCharater }), (0, jsx.jsxs)(CharacterInner, { children: [(0, jsx.jsx)(CharacterIllust, { id: current.id, url: current.illust.url }), (0, jsx.jsxs)(CharacterInfo, { children: [(0, jsx.jsx)(CharacterName, { id: current.id, name: current.name }), current.status && current.status.length > 0 && (0, jsx.jsx)(CharacterStatus, { id: current.id, status: current.status }), (0, jsx.jsx)(CharacterDescription, { id: current.id, description: current.description }), (0, jsx.jsx)(CharacterSocialLinks, { id: current.id, social: current.social }), (0, jsx.jsx)(CharacterPictures, { picture: current.picture })] })] })]
+          children: [(0, jsx.jsxs)("div", { style: { display: "grid", rowGap: "8px" }, children: [(0, jsx.jsx)("div", { style: { fontSize: "28px", fontWeight: "700", lineHeight: "1.4", color: "var(--color-black)" }, children: title }), description && (0, jsx.jsx)("div", { style: { fontSize: "14px", lineHeight: "1.9", color: "rgba(0,0,0,0.68)" }, children: description })] }), (0, jsx.jsx)(CharacterIcons, { currentId: currentId, icons: icons, changeCharater: changeCharater }), (0, jsx.jsxs)(CharacterInner, { children: [(0, jsx.jsx)(CharacterIllust, { id: current.id, url: current.illust.url }), (0, jsx.jsxs)(CharacterInfo, { children: [(0, jsx.jsx)(CharacterLogo, { id: current.id, logo: current.logo, name: current.name }), (0, jsx.jsx)(CharacterName, { id: current.id, name: current.name }), current.status && current.status.length > 0 && (0, jsx.jsx)(CharacterStatus, { id: current.id, status: current.status }), (0, jsx.jsx)(CharacterDescription, { id: current.id, description: current.description }), (0, jsx.jsx)(CharacterSocialLinks, { id: current.id, social: current.social }), (0, jsx.jsx)(CharacterPictures, { picture: current.picture })] })] })]
         }) : null;
       }
 
@@ -442,7 +483,7 @@
 
       function CharacterPage() {
         return (0, jsx.jsxs)(jsx.Fragment, {
-          children: [(0, jsx.jsx)(seo.Z, { title: "CHARACTER | mashiromix.com｜Comic&illustration web site by mashiro" }), (0, jsx.jsxs)(PageWrapper, { children: [(0, jsx.jsxs)(PageInner, { children: [(0, jsx.jsx)(menu.bK, {}), (0, jsx.jsx)(CharacterContent, {})] }), (0, jsx.jsx)(divider.Z, { reverse: !0 }), (0, jsx.jsx)(footer.Z, {})] }), (0, jsx.jsx)(floatingBanner.dw, {})]
+          children: [(0, jsx.jsx)(seo.Z, { title: "CHARACTER | Re:ALive for TailWind" }), (0, jsx.jsxs)(PageWrapper, { children: [(0, jsx.jsxs)(PageInner, { children: [(0, jsx.jsx)(menu.bK, {}), (0, jsx.jsx)(CharacterContent, {})] }), (0, jsx.jsx)(divider.Z, { reverse: !0 }), (0, jsx.jsx)(footer.Z, {})] }), (0, jsx.jsx)(floatingBanner.dw, {})]
         });
       }
 

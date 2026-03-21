@@ -1,0 +1,13 @@
+{
+  "textlint.enable": true,
+  "textlint.run": "onSave",
+  "[markdown]": {
+    "textlint.run": "onSave"
+  },
+  "prh.defines": [
+    {
+      "label": "WebAPI用語",
+      "path": ".prhrc.js"
+    }
+  ]
+}

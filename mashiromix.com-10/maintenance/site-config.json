@@ -201,7 +201,7 @@
     ]
   },
   "contact": {
-    "requestHtml": "ご依頼いただく際は<br />・<span>内容</span><br />・<span>稿料</span><br />・<span>納期</span><br />を必ず書いていただけると幸いです。",
+    "requestHtml": "ご依頼いただく際は<br />・<span>内容</span><br />・<span>稿料</span><br />・<span>納期</span><br />・<span>期間</span><br />を必ず書いていただけると幸いです。",
     "buttons": [
       {
         "href": "mailto:info@mashiromix.com",
@@ -214,7 +214,7 @@
         "text": "Googleフォームでお問い合わせ"
       }
     ],
-    "smallTextHtml": "※なお、無償のご依頼は受け付けておりません。Live2Dのご依頼はnizimaよりお願い致します。<br />あらかじめご了承ください。"
+    "smallTextHtml": "※なお、無償のご依頼は受け付けておりません。<br />あらかじめご了承ください。"
   },
   "footer": {
     "copyright": "© 2023 水咲ましろ/MashiroMIX."

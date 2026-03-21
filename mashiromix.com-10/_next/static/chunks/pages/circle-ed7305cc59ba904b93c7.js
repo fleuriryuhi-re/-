@@ -201,6 +201,7 @@
             url: "https://nizima.com",
             imageUrl: "/images/about/links/dlsite.jpg"
           }],
+          y = "【ガイドライン】\n・無断転載、再配布、AI学習への利用は禁止です。\n・誹謗中傷、公序良俗に反する用途での利用は禁止です。\n・クレジットは「MashiroMIX / 水咲ましろ」をご記載ください。\n・商用利用、改変利用は事前にご相談ください。\n・本ガイドラインは予告なく更新される場合があります。",
           x = !0;
   
         function f(i) {
@@ -210,7 +211,7 @@
             r = t[1];
           return (0, h.jsxs)(h.Fragment, {
             children: [(0, h.jsx)(o.Z, {
-              title: "CIRCLE mashiromix.com｜web site by 水咲ましろ"
+              title: "CIRCLE Re:ALive for TailWind"
             }), (0, h.jsxs)(w, {
               children: [(0, h.jsxs)(v, {
                 children: [(0, h.jsx)(s.aR, {}), (0, h.jsx)(b, {
@@ -236,6 +237,8 @@
                       imageUrl: a
                     }, e)
                   }))
+                }), (0, h.jsx)(C, {
+                  children: y
                 })]
               }), (0, h.jsx)(m.Z, {
                 reverse: !0
@@ -267,7 +270,11 @@
           _ = n.ZP.div.withConfig({
             displayName: "circle__Links",
             componentId: "sc-n5b2kj-4"
-          })(["display:grid;", "{grid-gap:24px;grid-template-columns:repeat(2,1fr);max-width:820px;width:calc(100% - 48px);}", "{grid-gap:16px;max-width:320px;width:calc(100% - 32px);}"], r.BC.mediumUp, r.BC.smallDown)
+          })(["display:grid;", "{grid-gap:24px;grid-template-columns:repeat(2,1fr);max-width:820px;width:calc(100% - 48px);}", "{grid-gap:16px;max-width:320px;width:calc(100% - 32px);}"], r.BC.mediumUp, r.BC.smallDown),
+          C = n.ZP.div.withConfig({
+            displayName: "circle__Guideline",
+            componentId: "sc-n5b2kj-5"
+          })(["font-size:16px;line-height:2;color:var(--color-black);white-space:pre-line;word-break:break-all;max-width:820px;width:calc(100% - 32px);text-align:left;padding:24px;border:solid 1px rgba(0,0,0,0.2);border-radius:12px;background-color:rgba(255,255,255,0.72);", "{font-size:14px;padding:16px;}"], r.BC.smallDown)
       },
       1829: function (i, e, t) {
         (window.__NEXT_P = window.__NEXT_P || []).push(["/circle", function () {

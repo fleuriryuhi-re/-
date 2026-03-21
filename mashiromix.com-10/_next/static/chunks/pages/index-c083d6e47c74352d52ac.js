@@ -1411,6 +1411,8 @@
                     children: "ご希望金額"
                   }), (0, d.jsx)("br", {}), "・", (0, d.jsx)("span", {
                     children: "納期"
+                  }), (0, d.jsx)("br", {}), "・", (0, d.jsx)("span", {
+                    children: "期間"
                   }), (0, d.jsx)("br", {}), "を必ず書いていただけると幸いです。"]
                 }), (0, d.jsxs)(ot, {
                   children: [(0, d.jsx)("a", {
@@ -1429,7 +1431,7 @@
                 }), (0, d.jsxs)(st, {
                   ref: s,
                   isIntersected: c,
-                  children: ["※なお、無償のご依頼は受け付けておりません。Live2Dのご依頼はnizimaよりお願い致します。", (0, d.jsx)("br", {}), "あらかじめご了承ください。"]
+                  children: ["※なお、無償のご依頼は受け付けておりません。", (0, d.jsx)("br", {}), "あらかじめご了承ください。"]
                 })]
               })]
             }), (0, d.jsx)(Cn.Z, {
@@ -1741,7 +1743,7 @@
             Promise.all([Rt("/images/main-visual/1.jpg"), Rt("/images/main-visual/1--dark.jpg"), Rt("/images/main-visual/2.jpg"), Rt("/images/main-visual/2--dark.jpg"), Rt("/images/about/vtuber.png"), Rt("/images/about/vtuber-bg.png"), Rt("/images/about/vtuber-sd.png"), Rt("/images/menu/about.svg"), Rt("/images/menu/character.svg"), Rt("/images/menu/circle.svg"), Rt("/images/menu/contact.svg"), Rt("/images/menu/news.svg"), Rt("/images/menu/works.svg"), Rt("/images/menu/share.svg"), Rt("/images/menu/facebook.svg"), Rt("/images/menu/twitter.svg")]).then(n, n)
           }), []), (0, d.jsxs)(d.Fragment, {
             children: [(0, d.jsx)(o.Z, {
-              title: "mashiromix.com｜web site by 水咲ましろ"
+              title: "Re:ALive for TailWind"
             }), (0, d.jsxs)(Ht, {
               children: [(0, d.jsx)(Q, {
                 emit: !l
