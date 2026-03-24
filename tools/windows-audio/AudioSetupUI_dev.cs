@@ -173,7 +173,36 @@ namespace WindowsAudioSetup
                 return true;
             }
 
-            message = "Voicemeeter_x64.exe が見つかりません。";
+            // インストール確認
+            if (IsVoicemeeterInstalled())
+            {
+                message = "Voicemeeter_x64.exe が見つかりません。";
+            }
+            else
+            {
+                message = "VOICEMEETER_NOT_INSTALLED";  // 特別なマーク
+            }
+            return false;
+        }
+
+        private static bool IsVoicemeeterInstalled()
+        {
+            string[] checkPaths = new string[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VB", "Voicemeeter"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "VB", "Voicemeeter"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VB", "Voicemeeter"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VB", "Voicemeeter")
+            };
+
+            for (int i = 0; i < checkPaths.Length; i++)
+            {
+                if (Directory.Exists(checkPaths[i]))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -1152,6 +1181,30 @@ namespace WindowsAudioSetup
                 if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
                 {
                     AppendImportantLog("      [WARN] " + vmStartMessage);
+                    
+                    // Voicemeeterがインストールされていない場合、ユーザーに促す
+                    if (vmStartMessage == "VOICEMEETER_NOT_INSTALLED")
+                    {
+                        DialogResult result = MessageBox.Show(
+                            this,
+                            "Voicemeeterがインストールされていないため、自動設定を続行できません。\n\nVoicemeeterをインストールしますか？",
+                            "Voicemeeterが見つかりません",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning
+                        );
+                        
+                        if (result == DialogResult.Yes)
+                        {
+                            // ブラウザでダウンロードページを開く
+                            try
+                            {
+                                System.Diagnostics.Process.Start("https://vb-audio.com/Voicemeeter/index.htm");
+                                AppendLog("Voicemeeterダウンロードページをブラウザで開きました。");
+                            }
+                            catch { }
+                        }
+                    }
+                    return;
                 }
                 else
                 {
