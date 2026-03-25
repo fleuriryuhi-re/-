@@ -5,6 +5,7 @@ REM 出力: オーディオ一括設定dev.exe
 setlocal enabledelayedexpansion
 chcp 65001 > nul
 cd /d "%~dp0"
+set "ICON=%~dp0assets\headset.ico"
 
 echo Building Dev version...
 "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" ^
@@ -12,6 +13,7 @@ echo Building Dev version...
   /target:winexe ^
   /platform:anycpu ^
   /optimize+ ^
+  /win32icon:"%ICON%" ^
   /out:"オーディオ一括設定dev.exe" ^
   /reference:System.dll ^
   /reference:System.Windows.Forms.dll ^

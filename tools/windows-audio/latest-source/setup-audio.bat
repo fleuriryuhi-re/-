@@ -5,6 +5,7 @@ chcp 65001 > nul
 set "SCRIPT_DIR=%~dp0"
 set "SRC=%SCRIPT_DIR%AudioSetupUI.cs"
 set "EXE=%SCRIPT_DIR%AudioSetupUIApp10.exe"
+set "ICON=%SCRIPT_DIR%assets\headset.ico"
 set "CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 if not exist "%CSC%" set "CSC=C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
 
@@ -26,7 +27,7 @@ echo  Windows サウンド設定 UI をビルドしています...
 echo ============================================================
 echo.
 
-"%CSC%" /nologo /target:winexe /platform:anycpu /optimize+ /out:"%EXE%" /reference:System.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "%SRC%"
+"%CSC%" /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:"%ICON%" /out:"%EXE%" /reference:System.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "%SRC%"
 set "EXIT_CODE=%ERRORLEVEL%"
 
 echo.

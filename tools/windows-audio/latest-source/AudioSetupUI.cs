@@ -619,6 +619,7 @@ namespace WindowsAudioSetup
         public MainForm()
         {
             InitializeComponent();
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Shown += MainForm_Shown;
             this.Resize += MainForm_Resize;
             // this.FormClosing += MainForm_FormClosing;  // Voicemeeterツール終了時自動終了機能（コメントアウト中）
