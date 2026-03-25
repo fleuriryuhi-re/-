@@ -1,0 +1,19 @@
+最新ソースの場所
+- tools/windows-audio/latest-source/
+
+主なファイル
+- AudioSetupUI_dev.cs
+- AudioSetupUI_prod.cs
+- build-dev.bat
+- build.bat
+- setup-audio-dev.bat
+- setup-audio.bat
+
+使い方
+1) 開発版ビルド
+   cd tools/windows-audio/latest-source
+   build-dev.bat
+
+2) 本番版ビルド
+   cd tools/windows-audio/latest-source
+   build.bat
