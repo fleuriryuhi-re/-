@@ -1426,8 +1426,8 @@ namespace WindowsAudioSetup
             bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
             bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
             bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-            bool vmRunning = VoicemeeterHelper.IsVoicemeeterX64Running();
-            return playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk && vmRunning;
+            // Note: Voicemeeter running status is checked separately in the caller, not here
+            return playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
         }
 
         private bool IsBusinessSetupAlreadyApplied(DeviceInfo playbackHeadphones, DeviceInfo captureMic, DeviceInfo vmInput, DeviceInfo captureA1, DeviceInfo captureB1)
