@@ -1139,7 +1139,19 @@ namespace WindowsAudioSetup
                     throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
                 }
 
-                if (IsAutomaticSetupAlreadyApplied(playbackHeadphones, playbackVmInput, captureB1, captureMic))
+                // Debug: Check each condition separately
+                bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
+                bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
+                
+                AppendLog("[デバッグ] 自動設定状態チェック:");
+                AppendLog("      再生(既定): " + playbackDefaultOk);
+                AppendLog("      再生(通信): " + playbackCommOk);
+                AppendLog("      録音(既定): " + recordingDefaultOk);
+                AppendLog("      録音(通信): " + recordingCommOk);
+                
+                if (playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk)
                 {
                     AppendLog("自動設定は既に適用済みのため、再設定をスキップしました。");
                     
