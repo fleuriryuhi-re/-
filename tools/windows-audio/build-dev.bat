@@ -3,6 +3,7 @@ REM ビルドスクリプト - Dev版
 REM 出力: オーディオ一括設定dev.exe
 
 setlocal enabledelayedexpansion
+chcp 65001 > nul
 cd /d "%~dp0"
 
 echo Building Dev version...
