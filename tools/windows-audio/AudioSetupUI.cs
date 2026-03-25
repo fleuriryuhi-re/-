@@ -1140,6 +1140,25 @@ namespace WindowsAudioSetup
                 if (IsAutomaticSetupAlreadyApplied(playbackPlantronics, playbackVmInput, captureB1, capturePlantronics))
                 {
                     AppendLog("自動設定は既に適用済みのため、再設定をスキップしました。");
+                    
+                    // ===== Voicemeeter起動確認（コメントアウト中）=====
+                    // Added: Check if Voicemeeter is running, start if not
+                    // if (!VoicemeeterHelper.IsVoicemeeterX64Running())
+                    // {
+                    //     AppendLog("[前処理] 設定は適用済みですが、Voicemeeterが起動していないため起動します。");
+                    //     string vmStartMessage;
+                    //     if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
+                    //     {
+                    //         AppendImportantLog("      [WARN] " + vmStartMessage);
+                    //     }
+                    //     else
+                    //     {
+                    //         AppendImportantLog("      " + vmStartMessage);
+                    //         System.Threading.Thread.Sleep(2000);
+                    //     }
+                    // }
+                    // ===== ここまでコメントアウト =====
+                    
                     MessageBox.Show(this, "現在の構成は既に自動設定済みです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     UpdateDefaultDeviceLabels();
                     return;
@@ -1249,6 +1268,13 @@ namespace WindowsAudioSetup
                 if (IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, vmInput, captureA1, captureB1))
                 {
                     AppendLog("通常業務構成は既に適用済みのため、再設定をスキップしました。");
+                    
+                    // ===== Voicemeeter終了確認（コメントアウト中）=====
+                    // Note: In business mode, Voicemeeter should be stopped but only if explicitly called
+                    // For now, early return prevents auto-stop on duplicate settings
+                    // Future enhancement: Add similar check to TryStopVoicemeeterX64 if needed
+                    // ===== ここまでコメントアウト =====
+                    
                     MessageBox.Show(this, "現在の構成は既に通常業務モードです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     UpdateDefaultDeviceLabels();
                     return;

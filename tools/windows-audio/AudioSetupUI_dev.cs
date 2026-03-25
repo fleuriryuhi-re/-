@@ -1142,6 +1142,23 @@ namespace WindowsAudioSetup
                 if (IsAutomaticSetupAlreadyApplied(playbackHeadphones, playbackVmInput, captureB1, captureMic))
                 {
                     AppendLog("自動設定は既に適用済みのため、再設定をスキップしました。");
+                    
+                    // ただしVoicemeeterが起動していない場合は起動する
+                    if (!VoicemeeterHelper.IsVoicemeeterX64Running())
+                    {
+                        AppendLog("[前処理] 設定は適用済みですが、Voicemeeterが起動していないため起動します。");
+                        string vmStartMsg;
+                        if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMsg))
+                        {
+                            AppendImportantLog("      [WARN] " + vmStartMsg);
+                        }
+                        else
+                        {
+                            AppendImportantLog("      " + vmStartMsg);
+                            System.Threading.Thread.Sleep(2000);
+                        }
+                    }
+                    
                     MessageBox.Show(this, "現在の構成は既に自動設定済みです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     UpdateDefaultDeviceLabels();
                     return;
