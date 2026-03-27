@@ -5,8 +5,19 @@ using System.Drawing;
 using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Resources;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+
+[assembly: AssemblyCompany("KDDICorporation AI戦略推進部")]
+[assembly: AssemblyProduct("Windows サウンド設定ツール")]
+[assembly: AssemblyCopyright("KDDICorporation AI戦略推進部")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.0.0")]
+[assembly: NeutralResourcesLanguage("ja-JP")]
 
 namespace WindowsAudioSetup
 {
@@ -250,6 +261,7 @@ namespace WindowsAudioSetup
                 int hr = enumerator.GetDefaultAudioEndpoint(flow, role, out device);
                 if (hr != 0)
                 {
+                    LastDefaultMessage = BuildDefaultEndpointErrorMessage(flow, role, hr);
                     return null;
                 }
 
@@ -257,7 +269,50 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 詳細: " + ex.Message;
+                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 例外=" + ex.GetType().FullName + ", 詳細: " + ex.Message;
+                return null;
+            }
+        }
+
+        private static string BuildDefaultEndpointErrorMessage(EDataFlow flow, ERole role, int hr)
+        {
+            StringBuilder message = new StringBuilder();
+            message.Append("既定デバイス取得に失敗しました。Flow=");
+            message.Append(flow);
+            message.Append(", Role=");
+            message.Append(role);
+            message.Append(", HRESULT=0x");
+            message.Append(((uint)hr).ToString("X8"));
+
+            string detail = GetHResultMessage(hr);
+            if (!string.IsNullOrEmpty(detail))
+            {
+                message.Append(", 詳細: ");
+                message.Append(detail);
+            }
+
+            if (hr == unchecked((int)0x80070490))
+            {
+                message.Append("。既定デバイス未設定、または対象ロールに対応するデバイスが存在しない可能性があります。");
+            }
+
+            return message.ToString();
+        }
+
+        private static string GetHResultMessage(int hr)
+        {
+            try
+            {
+                Exception hrException = Marshal.GetExceptionForHR(hr);
+                if (hrException == null)
+                {
+                    return null;
+                }
+
+                return hrException.Message;
+            }
+            catch
+            {
                 return null;
             }
         }
@@ -974,7 +1029,68 @@ namespace WindowsAudioSetup
             SafeAddDevicesToList(EDataFlow.eRender, "再生");
             SafeAddDevicesToList(EDataFlow.eCapture, "録音");
             SafeUpdateDefaultDeviceLabels();
+
+            if (AreAllVisibleDevicesDisabled())
+            {
+                AppendLog("[WARN] 再生/録音デバイスがすべて無効状態です。マニュアルを確認して有効化してください。");
+                DialogResult dialogResult = MessageBox.Show(
+                    this,
+                    "再生/録音デバイスがすべて無効状態です。\r\n\r\n" +
+                    "[対応]\r\n" +
+                    "1. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
+                    "2. 必要なデバイスを有効化してください。\r\n\r\n" +
+                    "OK を押すと Windows サウンド設定を開きます。",
+                    "デバイス有効化が必要です",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    Process.Start("control.exe", "mmsys.cpl");
+                }
+            }
+
             AppendLog("デバイス一覧の更新が終了しました。");
+        }
+
+        private bool AreAllVisibleDevicesDisabled()
+        {
+            List<DeviceInfo> renderDevices = AudioHelper.Enumerate(EDataFlow.eRender);
+            List<DeviceInfo> captureDevices = AudioHelper.Enumerate(EDataFlow.eCapture);
+
+            bool hasVisibleDevices = false;
+            int i;
+            for (i = 0; i < renderDevices.Count; i++)
+            {
+                DeviceInfo device = renderDevices[i];
+                if (!IsVisibleInMmsysList(device))
+                {
+                    continue;
+                }
+
+                hasVisibleDevices = true;
+                if ((device.State & 1) == 1)
+                {
+                    return false;
+                }
+            }
+
+            for (i = 0; i < captureDevices.Count; i++)
+            {
+                DeviceInfo device = captureDevices[i];
+                if (!IsVisibleInMmsysList(device))
+                {
+                    continue;
+                }
+
+                hasVisibleDevices = true;
+                if ((device.State & 1) == 1)
+                {
+                    return false;
+                }
+            }
+
+            return hasVisibleDevices;
         }
 
         private void SafeRefreshDevices()
@@ -1234,13 +1350,22 @@ namespace WindowsAudioSetup
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 自動設定に失敗しました", ex);
                 AppendLog("手動フォールバック用にサウンド設定を開きます。");
-                Process.Start("control.exe", "mmsys.cpl");
-                MessageBox.Show(
+                DialogResult dialogResult = MessageBox.Show(
                     this,
-                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じて仮想オーディオデバイス操作マニュアルの3ページを確認し手動で仕上げてください。",
+                    "自動設定に失敗しました。\r\n\r\n" +
+                    "[原因]\r\n" + ex.Message + "\r\n\r\n" +
+                    "[対応]\r\n" +
+                    "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
+                    "2. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
+                    "3. 必要なデバイスを有効化後、再実行してください。",
                     "エラー",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    Process.Start("control.exe", "mmsys.cpl");
+                }
             }
         }
 
@@ -1266,14 +1391,29 @@ namespace WindowsAudioSetup
                 DeviceInfo playbackHeadset = FindBestPlantronicsRenderHeadset();
                 DeviceInfo captureMic = FindBestPlantronicsCaptureMic();
 
+                List<string> missingDevices = new List<string>();
                 if (playbackHeadset == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『Plantronics DA80 Headset/Earphone』が見つかりません。");
+                    missingDevices.Add("Plantronics DA80 Headset/Earphone");
                 }
-
                 if (captureMic == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Plantronics DA80 Mic/Headset』が見つかりません。");
+                    missingDevices.Add("Plantronics DA80 Mic/Headset");
+                }
+
+                if (missingDevices.Count > 0)
+                {
+                    StringBuilder missingMessage = new StringBuilder();
+                    missingMessage.Append("通常業務用への復帰に必要なデバイスが見つかりません。");
+                    missingMessage.Append("\r\n\r\n[未検出デバイス]");
+                    int i;
+                    for (i = 0; i < missingDevices.Count; i++)
+                    {
+                        missingMessage.Append("\r\n - ");
+                        missingMessage.Append(missingDevices[i]);
+                    }
+
+                    throw new InvalidOperationException(missingMessage.ToString());
                 }
 
                 if (IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, vmInput, captureA1, captureB1))
@@ -1346,6 +1486,33 @@ namespace WindowsAudioSetup
             {
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 通常業務用への復帰に失敗しました", ex);
+
+                bool isMissingDeviceError =
+                    ex is InvalidOperationException &&
+                    ex.Message != null &&
+                    ex.Message.IndexOf("[未検出デバイス]", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (isMissingDeviceError)
+                {
+                    AppendLog("手動確認のためサウンド設定を開きます。");
+                    DialogResult dialogResult = MessageBox.Show(
+                        this,
+                        "通常業務用への復帰に失敗しました。\r\n\r\n" +
+                        "[原因]\r\n" + ex.Message + "\r\n\r\n" +
+                        "[対応]\r\n" +
+                        "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
+                        "2. 上記デバイスの接続/有効化を確認してください。",
+                        "エラー",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    if (dialogResult == DialogResult.OK)
+                    {
+                        Process.Start("control.exe", "mmsys.cpl");
+                    }
+                    return;
+                }
+
                 MessageBox.Show(
                     this,
                     "通常業務用への復帰に失敗しました。\r\n\r\n" + ex.Message,
@@ -1383,6 +1550,11 @@ namespace WindowsAudioSetup
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
+            }
+
+            if (playbackDefault == null && playbackComm == null && recordingDefault == null && recordingComm == null)
+            {
+                AppendLog("[INFO] 再生/録音の既定デバイスが未設定の可能性があります。Windows のサウンド設定で既定と既定の通信デバイスを確認してください。");
             }
 
             DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });

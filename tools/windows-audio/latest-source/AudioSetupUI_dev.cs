@@ -5,9 +5,19 @@ using System.Drawing;
 using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Resources;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+
+[assembly: AssemblyCompany("KDDICorporation AI戦略推進部")]
+[assembly: AssemblyProduct("Windows サウンド設定ツール")]
+[assembly: AssemblyCopyright("KDDICorporation AI戦略推進部")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.0.0")]
+[assembly: NeutralResourcesLanguage("ja-JP")]
 
 namespace WindowsAudioSetup
 {
@@ -287,6 +297,7 @@ namespace WindowsAudioSetup
                 int hr = enumerator.GetDefaultAudioEndpoint(flow, role, out device);
                 if (hr != 0)
                 {
+                    LastDefaultMessage = BuildDefaultEndpointErrorMessage(flow, role, hr);
                     return null;
                 }
 
@@ -294,7 +305,50 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 詳細: " + ex.Message;
+                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 例外=" + ex.GetType().FullName + ", 詳細: " + ex.Message;
+                return null;
+            }
+        }
+
+        private static string BuildDefaultEndpointErrorMessage(EDataFlow flow, ERole role, int hr)
+        {
+            StringBuilder message = new StringBuilder();
+            message.Append("既定デバイス取得に失敗しました。Flow=");
+            message.Append(flow);
+            message.Append(", Role=");
+            message.Append(role);
+            message.Append(", HRESULT=0x");
+            message.Append(((uint)hr).ToString("X8"));
+
+            string detail = GetHResultMessage(hr);
+            if (!string.IsNullOrEmpty(detail))
+            {
+                message.Append(", 詳細: ");
+                message.Append(detail);
+            }
+
+            if (hr == unchecked((int)0x80070490))
+            {
+                message.Append("。既定デバイス未設定、または対象ロールに対応するデバイスが存在しない可能性があります。");
+            }
+
+            return message.ToString();
+        }
+
+        private static string GetHResultMessage(int hr)
+        {
+            try
+            {
+                Exception hrException = Marshal.GetExceptionForHR(hr);
+                if (hrException == null)
+                {
+                    return null;
+                }
+
+                return hrException.Message;
+            }
+            catch
+            {
                 return null;
             }
         }
@@ -1012,7 +1066,68 @@ namespace WindowsAudioSetup
             SafeAddDevicesToList(EDataFlow.eRender, "再生");
             SafeAddDevicesToList(EDataFlow.eCapture, "録音");
             SafeUpdateDefaultDeviceLabels();
+
+            if (AreAllVisibleDevicesDisabled())
+            {
+                AppendLog("[WARN] 再生/録音デバイスがすべて無効状態です。マニュアルを確認して有効化してください。");
+                DialogResult dialogResult = MessageBox.Show(
+                    this,
+                    "再生/録音デバイスがすべて無効状態です。\r\n\r\n" +
+                    "[対応]\r\n" +
+                    "1. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
+                    "2. 必要なデバイスを有効化してください。\r\n\r\n" +
+                    "OK を押すと Windows サウンド設定を開きます。",
+                    "デバイス有効化が必要です",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    Process.Start("control.exe", "mmsys.cpl");
+                }
+            }
+
             AppendLog("デバイス一覧の更新が終了しました。");
+        }
+
+        private bool AreAllVisibleDevicesDisabled()
+        {
+            List<DeviceInfo> renderDevices = AudioHelper.Enumerate(EDataFlow.eRender);
+            List<DeviceInfo> captureDevices = AudioHelper.Enumerate(EDataFlow.eCapture);
+
+            bool hasVisibleDevices = false;
+            int i;
+            for (i = 0; i < renderDevices.Count; i++)
+            {
+                DeviceInfo device = renderDevices[i];
+                if (!IsVisibleInMmsysList(device))
+                {
+                    continue;
+                }
+
+                hasVisibleDevices = true;
+                if ((device.State & 1) == 1)
+                {
+                    return false;
+                }
+            }
+
+            for (i = 0; i < captureDevices.Count; i++)
+            {
+                DeviceInfo device = captureDevices[i];
+                if (!IsVisibleInMmsysList(device))
+                {
+                    continue;
+                }
+
+                hasVisibleDevices = true;
+                if ((device.State & 1) == 1)
+                {
+                    return false;
+                }
+            }
+
+            return hasVisibleDevices;
         }
 
         private void SafeRefreshDevices()
@@ -1147,14 +1262,19 @@ namespace WindowsAudioSetup
             try
             {
                 DeviceInfo playbackHeadphones = FindBestRealtekHeadphones();
+                DeviceInfo playbackSpeakers = FindBestRealtekSpeakers();
+                DeviceInfo playbackIntelSpeakers = FindBestIntelSmartSoundSpeakers();
+                DeviceInfo playbackTarget = playbackHeadphones ?? playbackSpeakers ?? playbackIntelSpeakers;
                 DeviceInfo playbackVmInput = FindFirstMatch(EDataFlow.eRender, new string[] { "Voicemeeter Input" });
                 DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });
                 DeviceInfo captureB1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out B1" });
                 DeviceInfo captureMic = FindBestRealtekExternalMic();
+                DeviceInfo captureArrayMic = FindBestIntelSmartSoundArrayMic();
+                DeviceInfo captureCommTarget = captureMic ?? captureArrayMic;
 
-                if (playbackHeadphones == null)
+                if (playbackTarget == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『ヘッドホン (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("再生デバイス『ヘッドホン/スピーカー (Realtek)』または『スピーカー (Intel SST)』が見つかりません。");
                 }
                 if (playbackVmInput == null)
                 {
@@ -1174,16 +1294,16 @@ namespace WindowsAudioSetup
                         "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
                         "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
-                if (captureMic == null)
+                if (captureCommTarget == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』または『マイク配列 (Intel SST)』が見つかりません。");
                 }
 
                 // Debug: Check each condition separately
-                bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                bool playbackDefaultOk = IsDefaultForRoles(playbackTarget.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
                 bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
                 bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
+                bool recordingCommOk = IsDefaultForRoles(captureCommTarget.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
                 
                 bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
                 if (alreadyApplied)
@@ -1219,8 +1339,19 @@ namespace WindowsAudioSetup
                     AppendLog("      全デバイス既に有効です。");
                 }
 
-                AppendLog("[1/5] 再生: " + playbackHeadphones.Name + " を既定のデバイスへ設定します。");
-                SetDefaultOrThrow(playbackHeadphones.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                AppendLog("[前処理-2] 通信録音デバイスの有効化を確認します。");
+                if (EnsureEnabled(captureCommTarget))
+                {
+                    AppendLog("      反映のため少々待機します...");
+                    System.Threading.Thread.Sleep(1200);
+                }
+                else
+                {
+                    AppendLog("      既に有効です。");
+                }
+
+                AppendLog("[1/5] 再生: " + playbackTarget.Name + " を既定のデバイスへ設定します。");
+                SetDefaultOrThrow(playbackTarget.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
                 AppendLog("      完了");
 
                 AppendLog("[2/5] 再生: Voicemeeter Input を既定の通信デバイスへ設定します。");
@@ -1234,11 +1365,11 @@ namespace WindowsAudioSetup
                 SetDefaultOrThrow(captureB1.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
                 AppendLog("      完了");
 
-                AppendLog("[5/5] 録音: " + captureMic.Name + " を既定の通信デバイスへ設定します。");
-                SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eCommunications });
+                AppendLog("[5/5] 録音: " + captureCommTarget.Name + " を既定の通信デバイスへ設定します。");
+                SetDefaultOrThrow(captureCommTarget.Id, new ERole[] { ERole.eCommunications });
                 AppendLog("      完了");
 
-                DisableNonTargetDevices(playbackHeadphones, playbackVmInput, captureB1, captureMic, captureA1);
+                DisableNonTargetDevices(playbackTarget, playbackVmInput, captureB1, captureCommTarget, captureA1);
 
                 AppendLog(string.Empty);
                 AppendLog("すべての設定が完了しました。");
@@ -1257,13 +1388,22 @@ namespace WindowsAudioSetup
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 自動設定に失敗しました", ex);
                 AppendLog("手動フォールバック用にサウンド設定を開きます。");
-                Process.Start("control.exe", "mmsys.cpl");
-                MessageBox.Show(
+                DialogResult dialogResult = MessageBox.Show(
                     this,
-                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じて仮想オーディオデバイス操作マニュアルの3ページを確認し手動で仕上げてください。",
+                    "自動設定に失敗しました。\r\n\r\n" +
+                    "[原因]\r\n" + ex.Message + "\r\n\r\n" +
+                    "[対応]\r\n" +
+                    "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
+                    "2. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
+                    "3. 必要なデバイスを有効化後、再実行してください。",
                     "エラー",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    Process.Start("control.exe", "mmsys.cpl");
+                }
             }
         }
 
@@ -1279,6 +1419,56 @@ namespace WindowsAudioSetup
             return false;
         }
 
+        private void EnsureEnabledOrThrow(DeviceInfo device, string category)
+        {
+            if (device == null || string.IsNullOrEmpty(device.Id))
+            {
+                throw new InvalidOperationException(category + " の対象デバイス情報が不正です。");
+            }
+
+            if ((device.State & 2) != 2)
+            {
+                AppendLog("      " + category + " " + device.Name + ": 既に有効です。");
+                return;
+            }
+
+            bool ok = AudioHelper.SetVisible(device.Id, true);
+            if (!ok)
+            {
+                throw new InvalidOperationException(category + " " + device.Name + " の有効化に失敗しました。サウンド設定から手動で有効化してください。");
+            }
+
+            AppendLog("      " + category + " " + device.Name + ": 有効化しました。");
+            device.State = (device.State | 1) & ~2;
+            System.Threading.Thread.Sleep(1200);
+        }
+
+        private void EnsureEnabledIfPresent(DeviceInfo device, string category)
+        {
+            if (device == null || string.IsNullOrEmpty(device.Id))
+            {
+                AppendLog("      " + category + ": 対象デバイスが見つからないためスキップします。");
+                return;
+            }
+
+            if ((device.State & 2) != 2)
+            {
+                AppendLog("      " + category + " " + device.Name + ": 既に有効です。");
+                return;
+            }
+
+            bool ok = AudioHelper.SetVisible(device.Id, true);
+            if (!ok)
+            {
+                AppendLog("      [WARN] " + category + " " + device.Name + " の有効化に失敗しました。必要なら手動で有効化してください。");
+                return;
+            }
+
+            AppendLog("      " + category + " " + device.Name + ": 有効化しました。");
+            device.State = (device.State | 1) & ~2;
+            System.Threading.Thread.Sleep(1200);
+        }
+
         private void RunRestoreBusinessSetup()
         {
             try
@@ -1287,18 +1477,39 @@ namespace WindowsAudioSetup
                 DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });
                 DeviceInfo captureB1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out B1" });
                 DeviceInfo playbackHeadphones = FindBestRealtekHeadphones();
+                DeviceInfo playbackSpeakers = FindBestRealtekSpeakers();
+                DeviceInfo playbackIntelSpeakers = FindBestIntelSmartSoundSpeakers();
                 DeviceInfo captureMic = FindBestRealtekExternalMic();
+                DeviceInfo captureArrayMic = FindBestIntelSmartSoundArrayMic();
+                DeviceInfo playbackPrimary = playbackHeadphones ?? playbackSpeakers ?? playbackIntelSpeakers;
+                DeviceInfo capturePrimary = captureMic ?? captureArrayMic;
 
-                if (playbackHeadphones == null)
+                List<string> missingDevices = new List<string>();
+                if (playbackPrimary == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『ヘッドホン (Realtek)』が見つかりません。");
+                    missingDevices.Add("再生デバイス (ヘッドホン/スピーカー Realtek または スピーカー Intel SST)");
                 }
-                if (captureMic == null)
+                if (capturePrimary == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
+                    missingDevices.Add("録音デバイス (外付けマイク Realtek または マイク配列 Intel SST)");
                 }
 
-                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadphones, captureMic, vmInput, captureA1, captureB1);
+                if (missingDevices.Count > 0)
+                {
+                    StringBuilder missingMessage = new StringBuilder();
+                    missingMessage.Append("通常業務へ戻す に必要なデバイスが見つかりません。");
+                    missingMessage.Append("\r\n\r\n[未検出デバイス]");
+                    int i;
+                    for (i = 0; i < missingDevices.Count; i++)
+                    {
+                        missingMessage.Append("\r\n - ");
+                        missingMessage.Append(missingDevices[i]);
+                    }
+
+                    throw new InvalidOperationException(missingMessage.ToString());
+                }
+
+                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackPrimary, capturePrimary, vmInput, captureA1, captureB1);
                 if (alreadyApplied)
                 {
                     AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
@@ -1348,12 +1559,23 @@ namespace WindowsAudioSetup
                     AppendLog("      デバイスが見つからないためスキップします。");
                 }
 
-                AppendLog("[4/5] 再生: " + playbackHeadphones.Name + " を既定/通信デバイスへ設定します。");
-                SetDefaultOrThrow(playbackHeadphones.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
+                AppendLog("[前処理-2] 業務用デバイスの有効化を確認します。");
+                EnsureEnabledOrThrow(playbackPrimary, "再生デバイス");
+                EnsureEnabledOrThrow(capturePrimary, "録音デバイス");
+
+                AppendLog("[前処理-3] 追加候補デバイスの有効化を確認します。");
+                EnsureEnabledIfPresent(playbackHeadphones, "再生デバイス(ヘッドホン Realtek)");
+                EnsureEnabledIfPresent(playbackSpeakers, "再生デバイス(スピーカー Realtek)");
+                EnsureEnabledIfPresent(playbackIntelSpeakers, "再生デバイス(スピーカー Intel SST)");
+                EnsureEnabledIfPresent(captureMic, "録音デバイス(外付けマイク Realtek)");
+                EnsureEnabledIfPresent(captureArrayMic, "録音デバイス(マイク配列 Intel SST)");
+
+                AppendLog("[4/5] 再生: " + playbackPrimary.Name + " を既定/通信デバイスへ設定します。");
+                SetDefaultOrThrow(playbackPrimary.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
                 AppendLog("      完了");
 
-                AppendLog("[5/5] 録音: " + captureMic.Name + " を既定/通信デバイスへ設定します。");
-                SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
+                AppendLog("[5/5] 録音: " + capturePrimary.Name + " を既定/通信デバイスへ設定します。");
+                SetDefaultOrThrow(capturePrimary.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
                 AppendLog("      完了");
 
                 AppendLog(string.Empty);
@@ -1372,6 +1594,33 @@ namespace WindowsAudioSetup
             {
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 通常業務へ戻す に失敗しました", ex);
+
+                bool isMissingDeviceError =
+                    ex is InvalidOperationException &&
+                    ex.Message != null &&
+                    ex.Message.IndexOf("[未検出デバイス]", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (isMissingDeviceError)
+                {
+                    AppendLog("手動確認のためサウンド設定を開きます。");
+                    DialogResult dialogResult = MessageBox.Show(
+                        this,
+                        "通常業務へ戻す に失敗しました。\r\n\r\n" +
+                        "[原因]\r\n" + ex.Message + "\r\n\r\n" +
+                        "[対応]\r\n" +
+                        "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
+                        "2. 上記デバイスの接続/有効化を確認してください。",
+                        "エラー",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    if (dialogResult == DialogResult.OK)
+                    {
+                        Process.Start("control.exe", "mmsys.cpl");
+                    }
+                    return;
+                }
+
                 MessageBox.Show(
                     this,
                     "通常業務へ戻す に失敗しました。\r\n\r\n" + ex.Message,
@@ -1409,6 +1658,11 @@ namespace WindowsAudioSetup
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
+            }
+
+            if (playbackDefault == null && playbackComm == null && recordingDefault == null && recordingComm == null)
+            {
+                AppendLog("[INFO] 再生/録音の既定デバイスが未設定の可能性があります。Windows のサウンド設定で既定と既定の通信デバイスを確認してください。");
             }
 
             DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });
@@ -1650,6 +1904,44 @@ namespace WindowsAudioSetup
             return best;
         }
 
+        private DeviceInfo FindBestRealtekSpeakers()
+        {
+            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eRender);
+            DeviceInfo best = null;
+            int bestScore = int.MinValue;
+            int i;
+
+            for (i = 0; i < devices.Count; i++)
+            {
+                DeviceInfo device = devices[i];
+                if (device == null || string.IsNullOrEmpty(device.Name))
+                {
+                    continue;
+                }
+
+                if (device.Name.IndexOf("Realtek", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                int score = 0;
+                if (device.Name.IndexOf("Realtek", StringComparison.OrdinalIgnoreCase) >= 0) score += 4;
+                if (device.Name.IndexOf("スピーカー", StringComparison.OrdinalIgnoreCase) >= 0) score += 12;
+                if (device.Name.IndexOf("Speaker", StringComparison.OrdinalIgnoreCase) >= 0) score += 12;
+                if (device.Name.IndexOf("ヘッドホン", StringComparison.OrdinalIgnoreCase) >= 0) score -= 8;
+                if (device.Name.IndexOf("Headphone", StringComparison.OrdinalIgnoreCase) >= 0) score -= 8;
+                if ((device.State & 1) == 1) score += 2;
+
+                if (score > bestScore)
+                {
+                    best = device;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
         private DeviceInfo FindBestPlantronicsRenderHeadset()
         {
             List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eRender);
@@ -1723,6 +2015,97 @@ namespace WindowsAudioSetup
                 if (normalizedName.IndexOf("microphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
                 if (normalizedName.IndexOf("マイク", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
                 if ((device.State & 1) == 1) score += 1;
+
+                if (score > bestScore)
+                {
+                    best = device;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
+        private DeviceInfo FindBestIntelSmartSoundArrayMic()
+        {
+            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eCapture);
+            DeviceInfo best = null;
+            int bestScore = int.MinValue;
+            int i;
+
+            for (i = 0; i < devices.Count; i++)
+            {
+                DeviceInfo device = devices[i];
+                if (device == null || string.IsNullOrEmpty(device.Name))
+                {
+                    continue;
+                }
+
+                string name = device.Name;
+                bool hasIntel = name.IndexOf("Intel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("インテル", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool hasSmartSound = name.IndexOf("Smart Sound", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     (name.IndexOf("スマート", StringComparison.OrdinalIgnoreCase) >= 0 && name.IndexOf("サウンド", StringComparison.OrdinalIgnoreCase) >= 0);
+                bool hasArrayMic = name.IndexOf("マイク配列", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                   name.IndexOf("Array", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                   name.IndexOf("デジタルマイク", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                   name.IndexOf("Digital Mic", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!hasIntel || !hasSmartSound || !hasArrayMic)
+                {
+                    continue;
+                }
+
+                int score = 0;
+                if (hasIntel) score += 5;
+                if (hasSmartSound) score += 6;
+                if (hasArrayMic) score += 8;
+                if ((device.State & 1) == 1) score += 1;
+
+                if (score > bestScore)
+                {
+                    best = device;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
+        private DeviceInfo FindBestIntelSmartSoundSpeakers()
+        {
+            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eRender);
+            DeviceInfo best = null;
+            int bestScore = int.MinValue;
+            int i;
+
+            for (i = 0; i < devices.Count; i++)
+            {
+                DeviceInfo device = devices[i];
+                if (device == null || string.IsNullOrEmpty(device.Name))
+                {
+                    continue;
+                }
+
+                string name = device.Name;
+                bool hasIntel = name.IndexOf("Intel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("インテル", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool hasSmartSound = name.IndexOf("Smart Sound", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     name.IndexOf("SST", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     (name.IndexOf("スマート", StringComparison.OrdinalIgnoreCase) >= 0 && name.IndexOf("サウンド", StringComparison.OrdinalIgnoreCase) >= 0);
+                bool hasSpeaker = name.IndexOf("スピーカー", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                  name.IndexOf("Speaker", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!hasIntel || !hasSpeaker)
+                {
+                    continue;
+                }
+
+                int score = 0;
+                if (hasIntel) score += 6;
+                if (hasSmartSound) score += 5;
+                if (hasSpeaker) score += 8;
+                if ((device.State & 1) == 1) score += 2;
 
                 if (score > bestScore)
                 {
