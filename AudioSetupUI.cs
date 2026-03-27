@@ -1101,7 +1101,7 @@ namespace WindowsAudioSetup
                 Process.Start("control.exe", "mmsys.cpl");
                 MessageBox.Show(
                     this,
-                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じて手動で仕上げてください。",
+                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じてマニュアルの3ページを確認し手動で仕上げてください。",
                     "エラー",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
