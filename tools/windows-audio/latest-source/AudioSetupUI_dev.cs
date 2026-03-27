@@ -1158,15 +1158,21 @@ namespace WindowsAudioSetup
                 }
                 if (playbackVmInput == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『Voicemeeter Input』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "再生デバイス『Voicemeeter Input』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureA1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out A1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out A1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureB1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out B1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureMic == null)
                 {
