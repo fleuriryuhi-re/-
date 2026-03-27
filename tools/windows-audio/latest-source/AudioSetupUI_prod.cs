@@ -589,8 +589,7 @@ namespace WindowsAudioSetup
                 "3. 録音: Voicemeeter Out A1 -> 無効なら有効化を試行\r\n" +
                 "4. 録音: Voicemeeter Out B1 -> 既定のデバイス\r\n" +
                 "5. 録音: Plantronics DA80 -> 既定の通信デバイス";
-            // [開発差分候補/コメントアウト]
-            // summaryLabel.Text += "\r\n※ 同一状態でも整合性確認のため再設定を行います";
+            summaryLabel.Text += "\r\n※ 同一状態でも整合性確認のため再設定を行います";
 
             applyButton = new Button();
             applyButton.Text = "自動設定を実行";
@@ -1030,31 +1029,36 @@ namespace WindowsAudioSetup
                 }
                 if (playbackVmInput == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『Voicemeeter Input』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "再生デバイス『Voicemeeter Input』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureA1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out A1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out A1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureB1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out B1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (capturePlantronics == null)
                 {
                     throw new InvalidOperationException("録音デバイス『Plantronics DA80 Mic/Headset』が見つかりません。");
                 }
 
-                // [開発差分候補/コメントアウト]
-                // bool playbackDefaultOk = IsDefaultForRoles(playbackPlantronics.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                // bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
-                // bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                // bool recordingCommOk = IsDefaultForRoles(capturePlantronics.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-                // bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-                // if (alreadyApplied)
-                // {
-                //     AppendLog("自動設定は既に適用済みですが、整合性確認のため再適用を実行します。");
-                // }
+                bool playbackDefaultOk = IsDefaultForRoles(playbackPlantronics.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
+                bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
+                bool recordingCommOk = IsDefaultForRoles(capturePlantronics.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
+                bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
+                if (alreadyApplied)
+                {
+                    AppendLog("自動設定は既に適用済みですが、整合性確認のため再適用を実行します。");
+                }
 
                 AppendLog("[1/5] 再生: Plantronics DA80 (Headset/Earphone) を既定デバイスへ設定します。");
                 SetDefaultOrThrow(playbackPlantronics.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
@@ -1090,8 +1094,7 @@ namespace WindowsAudioSetup
                 SetDefaultOrThrow(capturePlantronics.Id, new ERole[] { ERole.eCommunications });
                 AppendLog("      完了");
 
-                // [開発差分候補/コメントアウト]
-                // DisableNonTargetDevices(playbackPlantronics, playbackVmInput, captureB1, capturePlantronics, captureA1);
+                DisableNonTargetDevices(playbackPlantronics, playbackVmInput, captureB1, capturePlantronics, captureA1);
 
                 AppendLog(string.Empty);
                 AppendLog("すべての設定が完了しました。");
@@ -1130,12 +1133,11 @@ namespace WindowsAudioSetup
                     throw new InvalidOperationException("録音デバイス『Plantronics DA80 Mic/Headset』が見つかりません。");
                 }
 
-                // [開発差分候補/コメントアウト]
-                // bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, null, null, null);
-                // if (alreadyApplied)
-                // {
-                //     AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
-                // }
+                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, null, null, null);
+                if (alreadyApplied)
+                {
+                    AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
+                }
 
                 AppendLog("[1/2] 再生: Plantronics DA80 (Headset/Earphone) を既定/通信へ設定します。");
                 SetDefaultOrThrow(playbackHeadset.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
@@ -1213,6 +1215,92 @@ namespace WindowsAudioSetup
                 if (!ok)
                 {
                     throw new InvalidOperationException("既定デバイスの設定に失敗しました。Role=" + roles[i]);
+                }
+            }
+        }
+
+        private bool IsBusinessSetupAlreadyApplied(DeviceInfo playbackHeadset, DeviceInfo captureMic, DeviceInfo vmInput, DeviceInfo captureA1, DeviceInfo captureB1)
+        {
+            bool playbackAllOk = IsDefaultForRoles(playbackHeadset.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
+            bool recordingAllOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
+            bool vmDevicesDisabled = IsDisabledOrMissing(vmInput) && IsDisabledOrMissing(captureA1) && IsDisabledOrMissing(captureB1);
+            return playbackAllOk && recordingAllOk && vmDevicesDisabled;
+        }
+
+        private static bool IsDefaultForRoles(string expectedDeviceId, EDataFlow flow, ERole[] roles)
+        {
+            if (string.IsNullOrEmpty(expectedDeviceId))
+            {
+                return false;
+            }
+
+            int i;
+            for (i = 0; i < roles.Length; i++)
+            {
+                DeviceInfo current = AudioHelper.GetDefault(flow, roles[i]);
+                if (current == null || !string.Equals(current.Id, expectedDeviceId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsDisabledOrMissing(DeviceInfo device)
+        {
+            if (device == null)
+            {
+                return true;
+            }
+
+            return (device.State & 2) == 2;
+        }
+
+        private void DisableNonTargetDevices(DeviceInfo playbackPlantronics, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo capturePlantronics, DeviceInfo captureA1)
+        {
+            AppendLog("[後処理] 対象外デバイスを無効化します。");
+
+            List<DeviceInfo> allRender = AudioHelper.Enumerate(EDataFlow.eRender);
+            int i;
+            for (i = 0; i < allRender.Count; i++)
+            {
+                DeviceInfo dev = allRender[i];
+                if (dev == null || string.IsNullOrEmpty(dev.Id))
+                {
+                    continue;
+                }
+
+                bool isTarget =
+                    (playbackPlantronics != null && string.Equals(dev.Id, playbackPlantronics.Id, StringComparison.OrdinalIgnoreCase)) ||
+                    (playbackVmInput != null && string.Equals(dev.Id, playbackVmInput.Id, StringComparison.OrdinalIgnoreCase));
+
+                if (!isTarget && (dev.State & 2) != 2)
+                {
+                    bool ok = AudioHelper.SetVisible(dev.Id, false);
+                    AppendLog("      再生 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
+                }
+            }
+
+            List<DeviceInfo> allCapture = AudioHelper.Enumerate(EDataFlow.eCapture);
+            int j;
+            for (j = 0; j < allCapture.Count; j++)
+            {
+                DeviceInfo dev = allCapture[j];
+                if (dev == null || string.IsNullOrEmpty(dev.Id))
+                {
+                    continue;
+                }
+
+                bool isTarget =
+                    (captureB1 != null && string.Equals(dev.Id, captureB1.Id, StringComparison.OrdinalIgnoreCase)) ||
+                    (capturePlantronics != null && string.Equals(dev.Id, capturePlantronics.Id, StringComparison.OrdinalIgnoreCase)) ||
+                    (captureA1 != null && string.Equals(dev.Id, captureA1.Id, StringComparison.OrdinalIgnoreCase));
+
+                if (!isTarget && (dev.State & 2) != 2)
+                {
+                    bool ok = AudioHelper.SetVisible(dev.Id, false);
+                    AppendLog("      録音 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
                 }
             }
         }

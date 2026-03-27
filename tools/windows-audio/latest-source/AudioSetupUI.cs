@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -131,98 +132,96 @@ namespace WindowsAudioSetup
         public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
     }
 
-    // ===== Voicemeeterプロセス自動化機能（コメントアウト中）=====
-    // internal static class VoicemeeterHelper
-    // {
-    //     public static bool TryStartVoicemeeterX64(out string message)
-    //     {
-    //         string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-    //         int r;
-    //         for (r = 0; r < runningNames.Length; r++)
-    //         {
-    //             if (Process.GetProcessesByName(runningNames[r]).Length > 0)
-    //             {
-    //                 message = "Voicemeeter x64 は既に起動しています。(" + runningNames[r] + ")";
-    //                 return true;
-    //             }
-    //         }
-    //
-    //         string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-    //         string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-    //         string[] exeCandidates = new string[]
-    //         {
-    //             Path.Combine(programFiles, "VB", "Voicemeeter", "Voicemeeter_x64.exe"),
-    //             Path.Combine(programFilesX86, "VB", "Voicemeeter", "Voicemeeter_x64.exe")
-    //         };
-    //
-    //         int i;
-    //         for (i = 0; i < exeCandidates.Length; i++)
-    //         {
-    //             string exePath = exeCandidates[i];
-    //             if (!File.Exists(exePath))
-    //             {
-    //                 continue;
-    //             }
-    //
-    //             Process.Start(exePath);
-    //             message = "Voicemeeter x64 の起動要求を送信しました。(" + Path.GetFileName(exePath) + ")";
-    //             return true;
-    //         }
-    //
-    //         message = "Voicemeeter_x64.exe が見つかりません。";
-    //         return false;
-    //     }
-    //
-    //     public static bool TryStopVoicemeeterX64(out string message)
-    //     {
-    //         string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-    //         int i;
-    //         bool stoppedAny = false;
-    //         for (i = 0; i < runningNames.Length; i++)
-    //         {
-    //             Process[] list = Process.GetProcessesByName(runningNames[i]);
-    //             int j;
-    //             for (j = 0; j < list.Length; j++)
-    //             {
-    //                 try
-    //                 {
-    //                     list[j].Kill();
-    //                     if (!list[j].WaitForExit(3000))
-    //                     {
-    //                         list[j].Kill();
-    //                     }
-    //                     stoppedAny = true;
-    //                 }
-    //                 catch { }
-    //             }
-    //         }
-    //
-    //         if (stoppedAny)
-    //         {
-    //             message = "Voicemeeter を終了しました。";
-    //             return true;
-    //         }
-    //
-    //         message = "Voicemeeter は起動していません。";
-    //         return true;
-    //     }
-    //
-    //     public static bool IsVoicemeeterX64Running()
-    //     {
-    //         string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-    //         int i;
-    //         for (i = 0; i < runningNames.Length; i++)
-    //         {
-    //             if (Process.GetProcessesByName(runningNames[i]).Length > 0)
-    //             {
-    //                 return true;
-    //             }
-    //         }
-    //
-    //         return false;
-    //     }
-    // }
-    // ===== ここまでコメントアウト =====
+    internal static class VoicemeeterHelper
+    {
+        public static bool TryStartVoicemeeterX64(out string message)
+        {
+            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
+            int r;
+            for (r = 0; r < runningNames.Length; r++)
+            {
+                if (Process.GetProcessesByName(runningNames[r]).Length > 0)
+                {
+                    message = "Voicemeeter x64 は既に起動しています。(" + runningNames[r] + ")";
+                    return true;
+                }
+            }
+
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] exeCandidates = new string[]
+            {
+                Path.Combine(programFiles, "VB", "Voicemeeter", "Voicemeeter_x64.exe"),
+                Path.Combine(programFilesX86, "VB", "Voicemeeter", "Voicemeeter_x64.exe")
+            };
+
+            int i;
+            for (i = 0; i < exeCandidates.Length; i++)
+            {
+                string exePath = exeCandidates[i];
+                if (!File.Exists(exePath))
+                {
+                    continue;
+                }
+
+                Process.Start(exePath);
+                message = "Voicemeeter x64 の起動要求を送信しました。(" + Path.GetFileName(exePath) + ")";
+                return true;
+            }
+
+            message = "Voicemeeter_x64.exe が見つかりません。";
+            return false;
+        }
+
+        public static bool TryStopVoicemeeterX64(out string message)
+        {
+            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
+            int i;
+            bool stoppedAny = false;
+            for (i = 0; i < runningNames.Length; i++)
+            {
+                Process[] list = Process.GetProcessesByName(runningNames[i]);
+                int j;
+                for (j = 0; j < list.Length; j++)
+                {
+                    try
+                    {
+                        list[j].Kill();
+                        if (!list[j].WaitForExit(3000))
+                        {
+                            list[j].Kill();
+                        }
+                        stoppedAny = true;
+                    }
+                    catch { }
+                }
+            }
+
+            if (stoppedAny)
+            {
+                message = "Voicemeeter を終了しました。";
+                return true;
+            }
+
+            message = "Voicemeeter は起動していません。";
+            return true;
+        }
+
+        public static bool IsVoicemeeterX64Running()
+        {
+            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
+            int i;
+            for (i = 0; i < runningNames.Length; i++)
+            {
+                if (Process.GetProcessesByName(runningNames[i]).Length > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 
     internal sealed class DeviceInfo
     {
@@ -622,16 +621,14 @@ namespace WindowsAudioSetup
             this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Shown += MainForm_Shown;
             this.Resize += MainForm_Resize;
-            // this.FormClosing += MainForm_FormClosing;  // Voicemeeterツール終了時自動終了機能（コメントアウト中）
+            this.FormClosing += MainForm_FormClosing;
         }
 
-        // ===== ツール終了時のVoicemeeter自動終了（コメントアウト中）=====
-        // private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        // {
-        //     string message;
-        //     VoicemeeterHelper.TryStopVoicemeeterX64(out message);
-        // }
-        // ===== ここまでコメントアウト =====
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            string message;
+            VoicemeeterHelper.TryStopVoicemeeterX64(out message);
+        }
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
@@ -1123,15 +1120,21 @@ namespace WindowsAudioSetup
                 }
                 if (playbackVmInput == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『Voicemeeter Input』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "再生デバイス『Voicemeeter Input』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureA1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out A1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out A1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (captureB1 == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out B1』が見つかりません。");
+                    throw new InvalidOperationException(
+                        "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
+                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
                 }
                 if (capturePlantronics == null)
                 {
@@ -1153,43 +1156,38 @@ namespace WindowsAudioSetup
                 if (playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk)
                 {
                     AppendLog("自動設定は既に適用済みのため、再設定をスキップしました。");
-                    
-                    // ===== Voicemeeter起動確認（コメントアウト中）=====
-                    // Added: Check if Voicemeeter is running, start if not
-                    // if (!VoicemeeterHelper.IsVoicemeeterX64Running())
-                    // {
-                    //     AppendLog("[前処理] 設定は適用済みですが、Voicemeeterが起動していないため起動します。");
-                    //     string vmStartMessage;
-                    //     if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
-                    //     {
-                    //         AppendImportantLog("      [WARN] " + vmStartMessage);
-                    //     }
-                    //     else
-                    //     {
-                    //         AppendImportantLog("      " + vmStartMessage);
-                    //         System.Threading.Thread.Sleep(2000);
-                    //     }
-                    // }
-                    // ===== ここまでコメントアウト =====
+
+                    if (!VoicemeeterHelper.IsVoicemeeterX64Running())
+                    {
+                        AppendLog("[前処理] 設定は適用済みですが、Voicemeeterが起動していないため起動します。");
+                        string vmStartMessageWhenApplied;
+                        if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessageWhenApplied))
+                        {
+                            AppendImportantLog("      [WARN] " + vmStartMessageWhenApplied);
+                        }
+                        else
+                        {
+                            AppendImportantLog("      " + vmStartMessageWhenApplied);
+                            System.Threading.Thread.Sleep(2000);
+                        }
+                    }
                     
                     MessageBox.Show(this, "現在の構成は既に自動設定済みです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     UpdateDefaultDeviceLabels();
                     return;
                 }
 
-                // ===== Voicemeeter自動起動機能（コメントアウト中）=====
-                // AppendLog("[前処理-0] Voicemeeter x64 を起動します。");
-                // string vmStartMessage;
-                // if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
-                // {
-                //     AppendImportantLog("      [WARN] " + vmStartMessage);
-                // }
-                // else
-                // {
-                //     AppendImportantLog("      " + vmStartMessage);
-                //     System.Threading.Thread.Sleep(2000);
-                // }
-                // ===== ここまでコメントアウト =====
+                AppendLog("[前処理-0] Voicemeeter x64 を起動します。");
+                string vmStartMessage;
+                if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
+                {
+                    AppendImportantLog("      [WARN] " + vmStartMessage);
+                }
+                else
+                {
+                    AppendImportantLog("      " + vmStartMessage);
+                    System.Threading.Thread.Sleep(2000);
+                }
 
                 // Voicemeeter デバイスを先に全て有効化してから既定設定を行う
                 AppendLog("[前処理] Voicemeeter デバイスの有効化を確認します。");
@@ -1281,30 +1279,22 @@ namespace WindowsAudioSetup
                 if (IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, vmInput, captureA1, captureB1))
                 {
                     AppendLog("通常業務構成は既に適用済みのため、再設定をスキップしました。");
-                    
-                    // ===== Voicemeeter終了確認（コメントアウト中）=====
-                    // Note: In business mode, Voicemeeter should be stopped but only if explicitly called
-                    // For now, early return prevents auto-stop on duplicate settings
-                    // Future enhancement: Add similar check to TryStopVoicemeeterX64 if needed
-                    // ===== ここまでコメントアウト =====
-                    
+
                     MessageBox.Show(this, "現在の構成は既に通常業務モードです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     UpdateDefaultDeviceLabels();
                     return;
                 }
 
-                // ===== Voicemeeter自動終了機能（コメントアウト中）=====
-                // AppendLog("[前処理] Voicemeeter を終了します。");
-                // string vmStopMessage;
-                // if (!VoicemeeterHelper.TryStopVoicemeeterX64(out vmStopMessage))
-                // {
-                //     AppendLog("      [WARN] " + vmStopMessage);
-                // }
-                // else
-                // {
-                //     AppendLog("      " + vmStopMessage);
-                // }
-                // ===== ここまでコメントアウト =====
+                AppendLog("[前処理] Voicemeeter を終了します。");
+                string vmStopMessage;
+                if (!VoicemeeterHelper.TryStopVoicemeeterX64(out vmStopMessage))
+                {
+                    AppendLog("      [WARN] " + vmStopMessage);
+                }
+                else
+                {
+                    AppendLog("      " + vmStopMessage);
+                }
 
                 AppendLog("[1/5] 再生: Voicemeeter Input を無効化します。");
                 if (vmInput != null)
@@ -1623,6 +1613,14 @@ namespace WindowsAudioSetup
         private void AppendLog(string message)
         {
             logBox.AppendText(message + Environment.NewLine);
+        }
+
+        private void AppendImportantLog(string message)
+        {
+            AppendLog("==============================================");
+            AppendLog("[重要] Voicemeeter 起動情報");
+            AppendLog(message);
+            AppendLog("==============================================");
         }
 
         private void AppendException(string title, Exception ex)
