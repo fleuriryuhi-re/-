@@ -5,7 +5,6 @@ using System.Drawing;
 using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -139,6 +138,21 @@ namespace WindowsAudioSetup
 
     internal static class VoicemeeterHelper
     {
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern int VBVMR_Login();
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern int VBVMR_Logout();
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        private static extern int VBVMR_SetParameterStringA([MarshalAs(UnmanagedType.LPStr)] string szParamName, [MarshalAs(UnmanagedType.LPStr)] string szString);
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        private static extern int VBVMR_SetParameterFloat([MarshalAs(UnmanagedType.LPStr)] string szParamName, float value);
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern int VBVMR_IsParametersDirty();
+
         public static bool TryStartVoicemeeterX64(out string message)
         {
             string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
@@ -178,85 +192,234 @@ namespace WindowsAudioSetup
             return false;
         }
 
-        public static bool TryStopVoicemeeterX64(out string message)
+        public static bool TryApplyStartupPreset(string micDeviceName, string headphonesDeviceName, out string message)
         {
-            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-            int i;
-            bool requestedAny = false;
-            bool allExited = true;
-            for (i = 0; i < runningNames.Length; i++)
+            if (string.IsNullOrEmpty(micDeviceName))
             {
-                Process[] list = Process.GetProcessesByName(runningNames[i]);
-                int j;
-                for (j = 0; j < list.Length; j++)
-                {
-                    try
-                    {
-                        Process p = list[j];
-                        if (p.HasExited)
-                        {
-                            continue;
-                        }
-
-                        // 強制終了ではなく通常終了を依頼する
-                        bool closeRequested = p.CloseMainWindow();
-                        if (closeRequested)
-                        {
-                            requestedAny = true;
-                            if (!p.WaitForExit(5000))
-                            {
-                                allExited = false;
-                            }
-                        }
-                        else
-                        {
-                            // メインウィンドウが取得できない場合は強制終了せず失敗扱い
-                            allExited = false;
-                        }
-                    }
-                    catch { }
-                }
+                message = "設定対象マイク名が空です。";
+                return false;
             }
-
-            if (requestedAny && allExited)
+            if (string.IsNullOrEmpty(headphonesDeviceName))
             {
-                message = "Voicemeeter に通常終了を依頼し、終了を確認しました。";
-                return true;
-            }
-
-            if (requestedAny && !allExited)
-            {
-                message = "Voicemeeter に通常終了を依頼しましたが、終了確認できないプロセスがあります。";
+                message = "設定対象ヘッドホン名が空です。";
                 return false;
             }
 
-            // プロセスは存在するが通常終了依頼できないケース（ウィンドウ未取得等）
-            for (i = 0; i < runningNames.Length; i++)
+            TryPrepareRemoteDllPath();
+
+            try
             {
-                if (Process.GetProcessesByName(runningNames[i]).Length > 0)
+                int loginResult;
+                if (!TryLoginWithRetry(12, 500, out loginResult))
                 {
-                    message = "Voicemeeter は起動中ですが、通常終了を依頼できませんでした。";
+                    message = "Voicemeeter Remote API に接続できません。LoginResult=" + loginResult;
                     return false;
                 }
-            }
 
-            message = "Voicemeeter は起動していません。";
-            return true;
+                // Voicemeeter が保存済み設定を読み込み終わるまで待機
+                // (ログイン直後は Voicemeeter 側の初期化中のため、先に設定を書くと上書きされる)
+                WaitForVoicemeeterIdle(10000);
+
+                try
+                {
+                    List<string> failures = new List<string>();
+
+                    if (!TrySetDeviceParameter("Strip[0].device", micDeviceName))
+                    {
+                        failures.Add("Stereo Input 1 デバイス選択");
+                    }
+
+                    if (!TrySetStereoInput1BOnly())
+                    {
+                        failures.Add("Stereo Input 1 を B のみに設定");
+                    }
+
+                    if (!TrySetStereoInput2ABOff())
+                    {
+                        failures.Add("Stereo Input 2 を AB 無効に設定");
+                    }
+
+                    if (!TrySetVirtualInputABOn())
+                    {
+                        failures.Add("Virtual Input を AB 両方有効に設定");
+                    }
+
+                    if (!TrySetDeviceParameter("Bus[0].device", headphonesDeviceName))
+                    {
+                        failures.Add("Hardware Out A1 デバイス選択");
+                    }
+
+                    if (failures.Count > 0)
+                    {
+                        message = "一部設定に失敗しました: " + string.Join(" / ", failures.ToArray());
+                        return false;
+                    }
+
+                    message = "Voicemeeter 初期プリセットを設定しました。";
+                    return true;
+                }
+                finally
+                {
+                    VBVMR_Logout();
+                }
+            }
+            catch (DllNotFoundException)
+            {
+                message = "VoicemeeterRemote64.dll が見つかりません。";
+                return false;
+            }
+            catch (EntryPointNotFoundException)
+            {
+                message = "Voicemeeter Remote API の関数が見つかりません。";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                message = "Voicemeeter プリセット設定中に例外: " + ex.Message;
+                return false;
+            }
         }
 
-        public static bool IsVoicemeeterX64Running()
+        // Voicemeeter のパラメータ変更が落ち着くまで待機
+        // IsParametersDirty が連続して 0 を返したら初期化完了とみなす
+        private static void WaitForVoicemeeterIdle(int timeoutMs)
         {
-            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-            int i;
-            for (i = 0; i < runningNames.Length; i++)
+            int interval = 300;
+            int elapsed = 0;
+            int stableCount = 0;
+            int stableRequired = 3;
+            while (elapsed < timeoutMs)
             {
-                if (Process.GetProcessesByName(runningNames[i]).Length > 0)
+                int dirty = VBVMR_IsParametersDirty();
+                if (dirty <= 0)
+                {
+                    stableCount++;
+                    if (stableCount >= stableRequired) return;
+                }
+                else
+                {
+                    stableCount = 0;
+                }
+                System.Threading.Thread.Sleep(interval);
+                elapsed += interval;
+            }
+        }
+
+        private static bool TryLoginWithRetry(int maxAttempts, int waitMs, out int lastResult)
+        {
+            lastResult = -999;
+            int i;
+            for (i = 0; i < maxAttempts; i++)
+            {
+                lastResult = VBVMR_Login();
+                if (lastResult >= 0)
                 {
                     return true;
                 }
+
+                System.Threading.Thread.Sleep(waitMs);
             }
 
             return false;
+        }
+
+        private static bool TrySetStereoInput1BOnly()
+        {
+            bool ok = true;
+            ok &= TrySetFloatParameter("Strip[0].A1", 0.0f, false);
+            ok &= TrySetFloatParameter("Strip[0].B1", 1.0f, false);
+
+            // 追加バスはエディション差異があるため missing は許容
+            TrySetFloatParameter("Strip[0].A2", 0.0f, true);
+            TrySetFloatParameter("Strip[0].A3", 0.0f, true);
+            TrySetFloatParameter("Strip[0].A4", 0.0f, true);
+            TrySetFloatParameter("Strip[0].A5", 0.0f, true);
+            TrySetFloatParameter("Strip[0].B2", 0.0f, true);
+            TrySetFloatParameter("Strip[0].B3", 0.0f, true);
+            return ok;
+        }
+
+        private static bool TrySetStereoInput2ABOff()
+        {
+            bool ok = true;
+            ok &= TrySetFloatParameter("Strip[1].A1", 0.0f, false);
+            ok &= TrySetFloatParameter("Strip[1].B1", 0.0f, false);
+
+            TrySetFloatParameter("Strip[1].A2", 0.0f, true);
+            TrySetFloatParameter("Strip[1].A3", 0.0f, true);
+            TrySetFloatParameter("Strip[1].A4", 0.0f, true);
+            TrySetFloatParameter("Strip[1].A5", 0.0f, true);
+            TrySetFloatParameter("Strip[1].B2", 0.0f, true);
+            TrySetFloatParameter("Strip[1].B3", 0.0f, true);
+            return ok;
+        }
+
+        private static bool TrySetVirtualInputABOn()
+        {
+            bool ok = true;
+            ok &= TrySetFloatParameter("Strip[2].A1", 1.0f, false);
+            ok &= TrySetFloatParameter("Strip[2].B1", 1.0f, false);
+            return ok;
+        }
+
+        private static bool TrySetDeviceParameter(string baseParameterName, string deviceName)
+        {
+            string[] candidates = new string[]
+            {
+                deviceName,
+                "WDM: " + deviceName,
+                "KS: " + deviceName,
+                "MME: " + deviceName
+            };
+
+            int rc = -1;
+            int i;
+            for (i = 0; i < candidates.Length; i++)
+            {
+                string name = candidates[i];
+                rc = VBVMR_SetParameterStringA(baseParameterName + ".wdm", name);
+                if (rc >= 0) return true;
+
+                rc = VBVMR_SetParameterStringA(baseParameterName + ".ks", name);
+                if (rc >= 0) return true;
+
+                rc = VBVMR_SetParameterStringA(baseParameterName + ".mme", name);
+                if (rc >= 0) return true;
+            }
+
+            return false;
+        }
+
+        private static bool TrySetFloatParameter(string parameterName, float value, bool allowMissing)
+        {
+            int rc = VBVMR_SetParameterFloat(parameterName, value);
+            if (rc >= 0)
+            {
+                return true;
+            }
+
+            return allowMissing;
+        }
+
+        private static void TryPrepareRemoteDllPath()
+        {
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] dllCandidates = new string[]
+            {
+                Path.Combine(programFiles, "VB", "Voicemeeter", "VoicemeeterRemote64.dll"),
+                Path.Combine(programFilesX86, "VB", "Voicemeeter", "VoicemeeterRemote64.dll")
+            };
+
+            int i;
+            for (i = 0; i < dllCandidates.Length; i++)
+            {
+                if (File.Exists(dllCandidates[i]))
+                {
+                    NativeMethods.SetDllDirectory(Path.GetDirectoryName(dllCandidates[i]));
+                    return;
+                }
+            }
         }
     }
 
@@ -651,20 +814,13 @@ namespace WindowsAudioSetup
         private Label recordingDefaultLabel;
         private Label recordingCommLabel;
         private Label voicemeeterA1Label;
+        private Label statusLabel;
 
         public MainForm()
         {
             InitializeComponent();
-            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Shown += MainForm_Shown;
             this.Resize += MainForm_Resize;
-            this.FormClosing += MainForm_FormClosing;
-        }
-
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            string message;
-            VoicemeeterHelper.TryStopVoicemeeterX64(out message);
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
@@ -715,17 +871,16 @@ namespace WindowsAudioSetup
             summaryLabel = new Label();
             summaryLabel.AutoSize = false;
             summaryLabel.Location = new Point(20, 20);
-            summaryLabel.Size = new Size(1170, 130);
+            summaryLabel.Size = new Size(1170, 100);
             summaryLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             summaryLabel.Text =
                 "自動設定内容 [開発用]\r\n" +
-                "0. Voicemeeter x64 を起動\r\n" +
-                "1. 再生: ヘッドホン (Realtek) -> 既定デバイス\r\n" +
+                "0. Voicemeeter x64 起動 + Stereo Input 1/2, Virtual Input, Hardware Out A1 をプリセット設定\r\n" +
+                "1. 再生: ヘッドホン (Realtek) -> 既定のデバイス\r\n" +
                 "2. 再生: Voicemeeter Input -> 既定の通信デバイス\r\n" +
-                "3. 録音: Voicemeeter Out A1 -> 無効なら有効化\r\n" +
-                "4. 録音: Voicemeeter Out B1 -> 既定デバイス\r\n" +
-                "5. 録音: 外付けマイク (Realtek) -> 既定の通信デバイス\r\n" +
-                "※ 同一状態でも整合性確認のため再設定を行います";
+                "3. 録音: Voicemeeter Out A1 -> 無効なら有効化を試行\r\n" +
+                "4. 録音: Voicemeeter Out B1 -> 既定のデバイス\r\n" +
+                "5. 録音: 外付けマイク (Realtek) -> 既定の通信デバイス";
 
             applyButton = new Button();
             applyButton.Text = "自動設定を実行";
@@ -839,6 +994,13 @@ namespace WindowsAudioSetup
             logBox.ReadOnly = true;
             logBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
+            statusLabel = new Label();
+            statusLabel.AutoSize = false;
+            statusLabel.Location = new Point(20, 620);
+            statusLabel.Size = new Size(1170, 18);
+            statusLabel.Text = "待機中";
+            statusLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
             this.Controls.Add(summaryLabel);
             this.Controls.Add(applyButton);
             this.Controls.Add(refreshButton);
@@ -848,6 +1010,7 @@ namespace WindowsAudioSetup
             this.Controls.Add(playbackGroupBox);
             this.Controls.Add(recordingGroupBox);
             this.Controls.Add(logBox);
+            this.Controls.Add(statusLabel);
 
             LayoutResponsiveControls();
         }
@@ -860,7 +1023,7 @@ namespace WindowsAudioSetup
             int contentWidth = Math.Max(900, this.ClientSize.Width - (margin * 2));
 
             summaryLabel.Location = new Point(margin, margin);
-            summaryLabel.Size = new Size(contentWidth, 130);
+            summaryLabel.Size = new Size(contentWidth, 100);
 
             int buttonTop = summaryLabel.Bottom + 10;
             int buttonHeight = 38;
@@ -902,9 +1065,11 @@ namespace WindowsAudioSetup
             voicemeeterA1Label.Size = new Size(defaultLabelWidth, 26);
 
             int listsTop = defaultGroupBox.Bottom + sectionGap;
+            int statusHeight = 18;
             int bottomMargin = 20;
             int logGap = 15;
-            int remainingHeight = this.ClientSize.Height - listsTop - bottomMargin;
+            int statusGap = 10;
+            int remainingHeight = this.ClientSize.Height - listsTop - bottomMargin - statusHeight - statusGap;
             int logHeight = Math.Max(80, remainingHeight / 3);
             int listsHeight = Math.Max(180, remainingHeight - logHeight - logGap);
 
@@ -924,6 +1089,9 @@ namespace WindowsAudioSetup
 
             logBox.Location = new Point(margin, playbackGroupBox.Bottom + logGap);
             logBox.Size = new Size(contentWidth, logHeight);
+
+            statusLabel.Location = new Point(margin, logBox.Bottom + statusGap);
+            statusLabel.Size = new Size(contentWidth, statusHeight);
 
             UpdateListColumns(playbackList);
             UpdateListColumns(recordingList);
@@ -1004,6 +1172,8 @@ namespace WindowsAudioSetup
 
         private void RefreshDevices()
         {
+            statusLabel.Text = "デバイス一覧を更新中...";
+            statusLabel.Refresh();
             this.Update();
             playbackList.Items.Clear();
             recordingList.Items.Clear();
@@ -1012,6 +1182,8 @@ namespace WindowsAudioSetup
             SafeAddDevicesToList(EDataFlow.eRender, "再生");
             SafeAddDevicesToList(EDataFlow.eCapture, "録音");
             SafeUpdateDefaultDeviceLabels();
+            statusLabel.Text = "デバイス一覧の更新が終了しました。";
+            statusLabel.Refresh();
             AppendLog("デバイス一覧の更新が終了しました。");
         }
 
@@ -1029,6 +1201,7 @@ namespace WindowsAudioSetup
                 recordingDefaultLabel.Text = "録音 既定: 取得失敗";
                 recordingCommLabel.Text = "録音 通信: 取得失敗";
                 voicemeeterA1Label.Text = "Voicemeeter Out A1: 取得失敗";
+                statusLabel.Text = "デバイス一覧の更新に失敗しました。";
                 AppendLog("デバイス一覧の更新に失敗しました。");
             }
         }
@@ -1158,37 +1331,19 @@ namespace WindowsAudioSetup
                 }
                 if (playbackVmInput == null)
                 {
-                    throw new InvalidOperationException(
-                        "再生デバイス『Voicemeeter Input』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("再生デバイス『Voicemeeter Input』が見つかりません。");
                 }
                 if (captureA1 == null)
                 {
-                    throw new InvalidOperationException(
-                        "録音デバイス『Voicemeeter Out A1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out A1』が見つかりません。");
                 }
                 if (captureB1 == null)
                 {
-                    throw new InvalidOperationException(
-                        "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("録音デバイス『Voicemeeter Out B1』が見つかりません。");
                 }
                 if (captureMic == null)
                 {
                     throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
-                }
-
-                // Debug: Check each condition separately
-                bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
-                bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-                
-                bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-                if (alreadyApplied)
-                {
-                    AppendLog("自動設定は既に適用済みですが、整合性確認のため再適用を実行します。");
                 }
 
                 AppendLog("[前処理-0] Voicemeeter x64 を起動します。");
@@ -1201,6 +1356,17 @@ namespace WindowsAudioSetup
                 {
                     AppendImportantLog("      " + vmStartMessage);
                     System.Threading.Thread.Sleep(2000);
+                }
+
+                AppendLog("[前処理-0b] Voicemeeter を初期プリセット設定します。");
+                string stereoMessage;
+                if (!VoicemeeterHelper.TryApplyStartupPreset(captureMic.Name, playbackHeadphones.Name, out stereoMessage))
+                {
+                    AppendLog("      [WARN] " + stereoMessage);
+                }
+                else
+                {
+                    AppendLog("      " + stereoMessage);
                 }
 
                 // [前処理] Voicemeeter デバイスを先に全て有効化してから既定設定を行う
@@ -1238,19 +1404,10 @@ namespace WindowsAudioSetup
                 SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eCommunications });
                 AppendLog("      完了");
 
-                DisableNonTargetDevices(playbackHeadphones, playbackVmInput, captureB1, captureMic, captureA1);
-
                 AppendLog(string.Empty);
                 AppendLog("すべての設定が完了しました。");
                 UpdateDefaultDeviceLabels();
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に自動設定済みです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "自動設定が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "自動設定が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -1298,23 +1455,6 @@ namespace WindowsAudioSetup
                     throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
                 }
 
-                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadphones, captureMic, vmInput, captureA1, captureB1);
-                if (alreadyApplied)
-                {
-                    AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
-                }
-
-                AppendLog("[前処理] Voicemeeter を終了します。");
-                string vmStopMessage;
-                if (!VoicemeeterHelper.TryStopVoicemeeterX64(out vmStopMessage))
-                {
-                    AppendLog("      [WARN] " + vmStopMessage);
-                }
-                else
-                {
-                    AppendLog("      " + vmStopMessage);
-                }
-
                 AppendLog("[1/5] 再生: Voicemeeter Input を無効化します。");
                 if (vmInput != null)
                 {
@@ -1359,14 +1499,7 @@ namespace WindowsAudioSetup
                 AppendLog(string.Empty);
                 AppendLog("通常業務へ戻す が完了しました。");
                 UpdateDefaultDeviceLabels();
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に通常業務モードです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "通常業務へ戻す が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "通常業務へ戻す が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -1457,103 +1590,6 @@ namespace WindowsAudioSetup
                 if (!ok)
                 {
                     throw new InvalidOperationException("既定デバイスの設定に失敗しました。Role=" + roles[i]);
-                }
-            }
-        }
-
-        private bool IsAutomaticSetupAlreadyApplied(DeviceInfo playbackHeadphones, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo captureMic)
-        {
-            bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-            bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
-            bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-            bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-            // Note: Voicemeeter running status is checked separately in the caller, not here
-            return playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-        }
-
-        private bool IsBusinessSetupAlreadyApplied(DeviceInfo playbackHeadphones, DeviceInfo captureMic, DeviceInfo vmInput, DeviceInfo captureA1, DeviceInfo captureB1)
-        {
-            bool playbackAllOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-            bool recordingAllOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-            bool vmStopped = !VoicemeeterHelper.IsVoicemeeterX64Running();
-            bool vmDevicesDisabled = IsDisabledOrMissing(vmInput) && IsDisabledOrMissing(captureA1) && IsDisabledOrMissing(captureB1);
-            return playbackAllOk && recordingAllOk && vmStopped && vmDevicesDisabled;
-        }
-
-        private static bool IsDefaultForRoles(string expectedDeviceId, EDataFlow flow, ERole[] roles)
-        {
-            if (string.IsNullOrEmpty(expectedDeviceId))
-            {
-                return false;
-            }
-
-            int i;
-            for (i = 0; i < roles.Length; i++)
-            {
-                DeviceInfo current = AudioHelper.GetDefault(flow, roles[i]);
-                if (current == null || !string.Equals(current.Id, expectedDeviceId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static bool IsDisabledOrMissing(DeviceInfo device)
-        {
-            if (device == null)
-            {
-                return true;
-            }
-
-            return (device.State & 2) == 2;
-        }
-
-        private void DisableNonTargetDevices(DeviceInfo playbackHeadphones, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo captureMic, DeviceInfo captureA1)
-        {
-            AppendLog("[後処理] 対象外デバイスを無効化します。");
-
-            List<DeviceInfo> allRender = AudioHelper.Enumerate(EDataFlow.eRender);
-            int i;
-            for (i = 0; i < allRender.Count; i++)
-            {
-                DeviceInfo dev = allRender[i];
-                if (dev == null || string.IsNullOrEmpty(dev.Id))
-                {
-                    continue;
-                }
-
-                bool isTarget =
-                    (playbackHeadphones != null && string.Equals(dev.Id, playbackHeadphones.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (playbackVmInput != null && string.Equals(dev.Id, playbackVmInput.Id, StringComparison.OrdinalIgnoreCase));
-
-                if (!isTarget && (dev.State & 2) != 2)
-                {
-                    bool ok = AudioHelper.SetVisible(dev.Id, false);
-                    AppendLog("      再生 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
-                }
-            }
-
-            List<DeviceInfo> allCapture = AudioHelper.Enumerate(EDataFlow.eCapture);
-            int j;
-            for (j = 0; j < allCapture.Count; j++)
-            {
-                DeviceInfo dev = allCapture[j];
-                if (dev == null || string.IsNullOrEmpty(dev.Id))
-                {
-                    continue;
-                }
-
-                bool isTarget =
-                    (captureB1 != null && string.Equals(dev.Id, captureB1.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (captureMic != null && string.Equals(dev.Id, captureMic.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (captureA1 != null && string.Equals(dev.Id, captureA1.Id, StringComparison.OrdinalIgnoreCase));
-
-                if (!isTarget && (dev.State & 2) != 2)
-                {
-                    bool ok = AudioHelper.SetVisible(dev.Id, false);
-                    AppendLog("      録音 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
                 }
             }
         }
@@ -1652,99 +1688,12 @@ namespace WindowsAudioSetup
 
         private DeviceInfo FindBestPlantronicsRenderHeadset()
         {
-            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eRender);
-            DeviceInfo best = null;
-            int bestScore = int.MinValue;
-            int i;
-
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Name))
-                {
-                    continue;
-                }
-
-                string normalizedName = NormalizeDeviceNameForMatch(device.Name);
-                bool hasDa80 = normalizedName.IndexOf("da80", StringComparison.OrdinalIgnoreCase) >= 0;
-                bool hasBrand = normalizedName.IndexOf("plantronics", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                normalizedName.IndexOf("poly", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!hasDa80 && !hasBrand)
-                {
-                    continue;
-                }
-
-                int score = 0;
-                if (hasBrand) score += 6;
-                if (hasDa80) score += 14;
-                if (normalizedName.IndexOf("headset", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("earphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("speaker", StringComparison.OrdinalIgnoreCase) >= 0) score += 3;
-                if ((device.State & 1) == 1) score += 1;
-
-                if (score > bestScore)
-                {
-                    best = device;
-                    bestScore = score;
-                }
-            }
-
-            return best;
+            return FindFirstMatch(EDataFlow.eRender, new string[] { "Plantronics" });
         }
 
         private DeviceInfo FindBestPlantronicsCaptureMic()
         {
-            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eCapture);
-            DeviceInfo best = null;
-            int bestScore = int.MinValue;
-            int i;
-
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Name))
-                {
-                    continue;
-                }
-
-                string normalizedName = NormalizeDeviceNameForMatch(device.Name);
-                bool hasDa80 = normalizedName.IndexOf("da80", StringComparison.OrdinalIgnoreCase) >= 0;
-                bool hasBrand = normalizedName.IndexOf("plantronics", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                normalizedName.IndexOf("poly", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!hasDa80 && !hasBrand)
-                {
-                    continue;
-                }
-
-                int score = 0;
-                if (hasBrand) score += 6;
-                if (hasDa80) score += 14;
-                if (normalizedName.IndexOf("mic", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("microphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("マイク", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if ((device.State & 1) == 1) score += 1;
-
-                if (score > bestScore)
-                {
-                    best = device;
-                    bestScore = score;
-                }
-            }
-
-            return best;
-        }
-
-        private static string NormalizeDeviceNameForMatch(string source)
-        {
-            if (string.IsNullOrEmpty(source))
-            {
-                return string.Empty;
-            }
-
-            string normalized = source.Normalize(NormalizationForm.FormKC);
-            normalized = normalized.Replace("　", " ");
-            normalized = Regex.Replace(normalized, "[\\s\\-_/()\\[\\]\\.]", string.Empty);
-            return normalized.ToLowerInvariant();
+            return FindFirstMatch(EDataFlow.eCapture, new string[] { "Plantronics" });
         }
 
         private static bool ContainsAll(string source, string[] keywords)

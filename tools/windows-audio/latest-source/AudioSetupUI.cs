@@ -5,19 +5,8 @@ using System.Drawing;
 using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Reflection;
-using System.Resources;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-
-[assembly: AssemblyCompany("KDDICorporation AI戦略推進部")]
-[assembly: AssemblyProduct("Windows サウンド設定ツール")]
-[assembly: AssemblyCopyright("KDDICorporation AI戦略推進部")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: AssemblyInformationalVersion("1.0.0.0")]
-[assembly: NeutralResourcesLanguage("ja-JP")]
 
 namespace WindowsAudioSetup
 {
@@ -261,7 +250,6 @@ namespace WindowsAudioSetup
                 int hr = enumerator.GetDefaultAudioEndpoint(flow, role, out device);
                 if (hr != 0)
                 {
-                    LastDefaultMessage = BuildDefaultEndpointErrorMessage(flow, role, hr);
                     return null;
                 }
 
@@ -269,50 +257,7 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 例外=" + ex.GetType().FullName + ", 詳細: " + ex.Message;
-                return null;
-            }
-        }
-
-        private static string BuildDefaultEndpointErrorMessage(EDataFlow flow, ERole role, int hr)
-        {
-            StringBuilder message = new StringBuilder();
-            message.Append("既定デバイス取得に失敗しました。Flow=");
-            message.Append(flow);
-            message.Append(", Role=");
-            message.Append(role);
-            message.Append(", HRESULT=0x");
-            message.Append(((uint)hr).ToString("X8"));
-
-            string detail = GetHResultMessage(hr);
-            if (!string.IsNullOrEmpty(detail))
-            {
-                message.Append(", 詳細: ");
-                message.Append(detail);
-            }
-
-            if (hr == unchecked((int)0x80070490))
-            {
-                message.Append("。既定デバイス未設定、または対象ロールに対応するデバイスが存在しない可能性があります。");
-            }
-
-            return message.ToString();
-        }
-
-        private static string GetHResultMessage(int hr)
-        {
-            try
-            {
-                Exception hrException = Marshal.GetExceptionForHR(hr);
-                if (hrException == null)
-                {
-                    return null;
-                }
-
-                return hrException.Message;
-            }
-            catch
-            {
+                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 詳細: " + ex.Message;
                 return null;
             }
         }
@@ -681,22 +626,6 @@ namespace WindowsAudioSetup
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (e.CloseReason == CloseReason.UserClosing && VoicemeeterHelper.IsVoicemeeterX64Running())
-            {
-                DialogResult closeResult = MessageBox.Show(
-                    this,
-                    "Voicemeeter x64 が起動中です。\r\nこのまま閉じると Voicemeeter を終了します。\r\n\r\n本当に終了しますか？",
-                    "警告",
-                    MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Warning);
-
-                if (closeResult != DialogResult.OK)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-            }
-
             string message;
             VoicemeeterHelper.TryStopVoicemeeterX64(out message);
         }
@@ -758,7 +687,7 @@ namespace WindowsAudioSetup
                 "3. 録音: Voicemeeter Out A1 -> 無効なら有効化\r\n" +
                 "4. 録音: Voicemeeter Out B1 -> 既定デバイス\r\n" +
                 "5. 録音: Plantronics DA80 -> 既定の通信デバイス\r\n" +
-                "※ 同一状態でも整合性確認のため再設定します";
+                "※ 同一状態なら再設定せず通知します";
 
             applyButton = new Button();
             applyButton.Text = "自動設定を実行";
@@ -989,16 +918,6 @@ namespace WindowsAudioSetup
                 logBox.Clear();
                 RunAutomaticSetup();
             }
-            catch (Exception ex)
-            {
-                AppendException("[ERROR] 自動設定処理で予期しないエラーが発生しました", ex);
-                MessageBox.Show(
-                    this,
-                    "自動設定処理で予期しないエラーが発生しました。\r\n\r\n" + ex.Message,
-                    "エラー",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
             finally
             {
                 this.Cursor = previousCursor;
@@ -1024,16 +943,6 @@ namespace WindowsAudioSetup
                 logBox.Clear();
                 RunRestoreBusinessSetup();
             }
-            catch (Exception ex)
-            {
-                AppendException("[ERROR] 通常業務復帰処理で予期しないエラーが発生しました", ex);
-                MessageBox.Show(
-                    this,
-                    "通常業務復帰処理で予期しないエラーが発生しました。\r\n\r\n" + ex.Message,
-                    "エラー",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
             finally
             {
                 this.Cursor = previousCursor;
@@ -1052,26 +961,7 @@ namespace WindowsAudioSetup
 
         private void OpenSoundButton_Click(object sender, EventArgs e)
         {
-            TryOpenSoundSettings();
-        }
-
-        private void TryOpenSoundSettings()
-        {
-            try
-            {
-                Process.Start("control.exe", "mmsys.cpl");
-            }
-            catch (Exception ex)
-            {
-                AppendException("[ERROR] サウンド設定を開けませんでした", ex);
-                MessageBox.Show(
-                    this,
-                    "Windows サウンド設定を開けませんでした。\r\n\r\n" +
-                    "[詳細]\r\n" + ex.Message,
-                    "エラー",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
+            Process.Start("control.exe", "mmsys.cpl");
         }
 
         private void RefreshDevices()
@@ -1084,68 +974,7 @@ namespace WindowsAudioSetup
             SafeAddDevicesToList(EDataFlow.eRender, "再生");
             SafeAddDevicesToList(EDataFlow.eCapture, "録音");
             SafeUpdateDefaultDeviceLabels();
-
-            if (AreAllVisibleDevicesDisabled())
-            {
-                AppendLog("[WARN] 再生/録音デバイスがすべて無効状態です。マニュアルを確認して有効化してください。");
-                DialogResult dialogResult = MessageBox.Show(
-                    this,
-                    "再生/録音デバイスがすべて無効状態です。\r\n\r\n" +
-                    "[対応]\r\n" +
-                    "1. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
-                    "2. 必要なデバイスを有効化してください。\r\n\r\n" +
-                    "OK を押すと Windows サウンド設定を開きます。",
-                    "デバイス有効化が必要です",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-
-                if (dialogResult == DialogResult.OK)
-                {
-                    TryOpenSoundSettings();
-                }
-            }
-
             AppendLog("デバイス一覧の更新が終了しました。");
-        }
-
-        private bool AreAllVisibleDevicesDisabled()
-        {
-            List<DeviceInfo> renderDevices = AudioHelper.Enumerate(EDataFlow.eRender);
-            List<DeviceInfo> captureDevices = AudioHelper.Enumerate(EDataFlow.eCapture);
-
-            bool hasVisibleDevices = false;
-            int i;
-            for (i = 0; i < renderDevices.Count; i++)
-            {
-                DeviceInfo device = renderDevices[i];
-                if (!IsVisibleInMmsysList(device))
-                {
-                    continue;
-                }
-
-                hasVisibleDevices = true;
-                if ((device.State & 1) == 1)
-                {
-                    return false;
-                }
-            }
-
-            for (i = 0; i < captureDevices.Count; i++)
-            {
-                DeviceInfo device = captureDevices[i];
-                if (!IsVisibleInMmsysList(device))
-                {
-                    continue;
-                }
-
-                hasVisibleDevices = true;
-                if ((device.State & 1) == 1)
-                {
-                    return false;
-                }
-            }
-
-            return hasVisibleDevices;
         }
 
         private void SafeRefreshDevices()
@@ -1323,39 +1152,41 @@ namespace WindowsAudioSetup
                 AppendLog("      再生(通信): " + playbackCommOk);
                 AppendLog("      録音(既定): " + recordingDefaultOk);
                 AppendLog("      録音(通信): " + recordingCommOk);
-
-                bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-                if (alreadyApplied)
+                
+                if (playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk)
                 {
-                    AppendLog("自動設定は既に適用済みですが、整合性確認のため再適用を実行します。");
+                    AppendLog("自動設定は既に適用済みのため、再設定をスキップしました。");
+
+                    if (!VoicemeeterHelper.IsVoicemeeterX64Running())
+                    {
+                        AppendLog("[前処理] 設定は適用済みですが、Voicemeeterが起動していないため起動します。");
+                        string vmStartMessageWhenApplied;
+                        if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessageWhenApplied))
+                        {
+                            AppendImportantLog("      [WARN] " + vmStartMessageWhenApplied);
+                        }
+                        else
+                        {
+                            AppendImportantLog("      " + vmStartMessageWhenApplied);
+                            System.Threading.Thread.Sleep(2000);
+                        }
+                    }
+                    
+                    MessageBox.Show(this, "現在の構成は既に自動設定済みです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UpdateDefaultDeviceLabels();
+                    return;
                 }
 
-                AppendLog("[前処理-0] DA80 デバイスの有効化を確認します。");
-                EnsureEnabledOrThrow(playbackPlantronics, "再生デバイス(DA80)");
-                EnsureEnabledOrThrow(capturePlantronics, "録音デバイス(DA80)");
-
-                playbackPlantronics = ResolveBusinessPlaybackPrimary(playbackPlantronics);
-                capturePlantronics = ResolveBusinessCapturePrimary(capturePlantronics);
-
-                if (playbackPlantronics == null || string.IsNullOrEmpty(playbackPlantronics.Id))
+                AppendLog("[前処理-0] Voicemeeter x64 を起動します。");
+                string vmStartMessage;
+                if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
                 {
-                    throw new InvalidOperationException("既定設定対象の再生デバイス(DA80)を特定できませんでした。サウンド設定を確認してください。");
-                }
-
-                if (capturePlantronics == null || string.IsNullOrEmpty(capturePlantronics.Id))
-                {
-                    throw new InvalidOperationException("既定設定対象の録音デバイス(DA80)を特定できませんでした。サウンド設定を確認してください。");
-                }
-
-                AppendLog("[前処理-2] 通信録音デバイスの有効化を確認します。");
-                if (EnsureEnabled(capturePlantronics))
-                {
-                    AppendLog("      反映のため少々待機します...");
-                    System.Threading.Thread.Sleep(1200);
+                    AppendImportantLog("      [WARN] " + vmStartMessage);
                 }
                 else
                 {
-                    AppendLog("      既に有効です。");
+                    AppendImportantLog("      " + vmStartMessage);
+                    System.Threading.Thread.Sleep(2000);
                 }
 
                 // Voicemeeter デバイスを先に全て有効化してから既定設定を行う
@@ -1396,48 +1227,20 @@ namespace WindowsAudioSetup
                 AppendLog(string.Empty);
                 AppendLog("すべての設定が完了しました。");
                 UpdateDefaultDeviceLabels();
-
-                AppendLog("[後処理] 完了ダイアログ表示中に Voicemeeter x64 を起動します。");
-                string vmStartMessage;
-                if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
-                {
-                    AppendImportantLog("      [WARN] " + vmStartMessage);
-                }
-                else
-                {
-                    AppendImportantLog("      " + vmStartMessage);
-                }
-
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に自動設定済みです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "自動設定が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "自動設定が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 自動設定に失敗しました", ex);
                 AppendLog("手動フォールバック用にサウンド設定を開きます。");
-                DialogResult dialogResult = MessageBox.Show(
+                Process.Start("control.exe", "mmsys.cpl");
+                MessageBox.Show(
                     this,
-                    "自動設定に失敗しました。\r\n\r\n" +
-                    "[原因]\r\n" + ex.Message + "\r\n\r\n" +
-                    "[対応]\r\n" +
-                    "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
-                    "2. 仮想オーディオデバイス操作マニュアルの3ページを確認してください。\r\n" +
-                    "3. 必要なデバイスを有効化後、再実行してください。",
+                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じて仮想オーディオデバイス操作マニュアルの3ページを確認し手動で仕上げてください。",
                     "エラー",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
-
-                if (dialogResult == DialogResult.OK)
-                {
-                    TryOpenSoundSettings();
-                }
             }
         }
 
@@ -1453,75 +1256,6 @@ namespace WindowsAudioSetup
             return false;
         }
 
-        private void EnsureEnabledOrThrow(DeviceInfo device, string category)
-        {
-            if (device == null || string.IsNullOrEmpty(device.Id))
-            {
-                throw new InvalidOperationException(category + " の対象デバイス情報が不正です。");
-            }
-
-            DeviceInfo current = ResolveCurrentDeviceByIdOrName(device) ?? device;
-            if (IsDeviceUnplugged(current.State))
-            {
-                throw new InvalidOperationException("[未接続デバイス]\r\n - " + category + " " + current.Name + ": " + GetStateLabel(current.State));
-            }
-
-            if (IsDeviceActive(current.State))
-            {
-                AppendLog("      " + category + " " + current.Name + ": 既に有効です。");
-                return;
-            }
-
-            bool ok = AudioHelper.SetVisible(current.Id, true);
-            if (!ok)
-            {
-                throw new InvalidOperationException(category + " " + current.Name + " の有効化に失敗しました。現在状態: " + GetStateLabel(current.State) + "。サウンド設定から手動で有効化してください。");
-            }
-
-            DeviceInfo refreshed = WaitAndResolveDevice(device);
-            if (refreshed == null)
-            {
-                throw new InvalidOperationException(category + " の有効化後にデバイスを再取得できませんでした。サウンド設定を確認してください。");
-            }
-
-            if (!IsDeviceActive(refreshed.State))
-            {
-                throw new InvalidOperationException(category + " " + refreshed.Name + " は有効化後も利用可能状態になっていません。現在状態: " + GetStateLabel(refreshed.State));
-            }
-
-            AppendLog("      " + category + " " + refreshed.Name + ": 有効化しました。");
-            device.Id = refreshed.Id;
-            device.Name = refreshed.Name;
-            device.State = refreshed.State;
-            System.Threading.Thread.Sleep(900);
-        }
-
-        private static bool IsDeviceActive(int state)
-        {
-            return (state & 1) == 1 && (state & 2) != 2 && (state & 4) != 4 && (state & 8) != 8;
-        }
-
-        private static bool IsDeviceUnplugged(int state)
-        {
-            return (state & 4) == 4 || (state & 8) == 8;
-        }
-
-        private DeviceInfo WaitAndResolveDevice(DeviceInfo expected)
-        {
-            int attempt;
-            for (attempt = 0; attempt < 4; attempt++)
-            {
-                System.Threading.Thread.Sleep(300);
-                DeviceInfo refreshed = ResolveCurrentDeviceByIdOrName(expected);
-                if (refreshed != null)
-                {
-                    return refreshed;
-                }
-            }
-
-            return null;
-        }
-
         private void RunRestoreBusinessSetup()
         {
             try
@@ -1532,38 +1266,23 @@ namespace WindowsAudioSetup
                 DeviceInfo playbackHeadset = FindBestPlantronicsRenderHeadset();
                 DeviceInfo captureMic = FindBestPlantronicsCaptureMic();
 
-                playbackHeadset = ResolveBusinessPlaybackPrimary(playbackHeadset);
-                captureMic = ResolveBusinessCapturePrimary(captureMic);
-
-                List<string> missingDevices = new List<string>();
                 if (playbackHeadset == null)
                 {
-                    missingDevices.Add("Plantronics DA80 Headset/Earphone");
+                    throw new InvalidOperationException("再生デバイス『Plantronics DA80 Headset/Earphone』が見つかりません。");
                 }
+
                 if (captureMic == null)
                 {
-                    missingDevices.Add("Plantronics DA80 Mic/Headset");
+                    throw new InvalidOperationException("録音デバイス『Plantronics DA80 Mic/Headset』が見つかりません。");
                 }
 
-                if (missingDevices.Count > 0)
+                if (IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, vmInput, captureA1, captureB1))
                 {
-                    StringBuilder missingMessage = new StringBuilder();
-                    missingMessage.Append("通常業務用への復帰に必要なデバイスが見つかりません。");
-                    missingMessage.Append("\r\n\r\n[未検出デバイス]");
-                    int i;
-                    for (i = 0; i < missingDevices.Count; i++)
-                    {
-                        missingMessage.Append("\r\n - ");
-                        missingMessage.Append(missingDevices[i]);
-                    }
+                    AppendLog("通常業務構成は既に適用済みのため、再設定をスキップしました。");
 
-                    throw new InvalidOperationException(missingMessage.ToString());
-                }
-
-                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadset, captureMic, vmInput, captureA1, captureB1);
-                if (alreadyApplied)
-                {
-                    AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
+                    MessageBox.Show(this, "現在の構成は既に通常業務モードです。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UpdateDefaultDeviceLabels();
+                    return;
                 }
 
                 AppendLog("[前処理] Voicemeeter を終了します。");
@@ -1610,100 +1329,23 @@ namespace WindowsAudioSetup
                     AppendLog("      デバイスが見つからないためスキップします。");
                 }
 
-                AppendLog("[前処理-2] 業務用 DA80 デバイスの有効化を確認します。");
-                EnsureEnabledOrThrow(playbackHeadset, "再生デバイス(DA80)");
-                EnsureEnabledOrThrow(captureMic, "録音デバイス(DA80)");
-
-                playbackHeadset = ResolveBusinessPlaybackPrimary(playbackHeadset);
-                captureMic = ResolveBusinessCapturePrimary(captureMic);
-
-                if (playbackHeadset == null || string.IsNullOrEmpty(playbackHeadset.Id))
-                {
-                    throw new InvalidOperationException("既定設定対象の再生デバイス(DA80)を特定できませんでした。サウンド設定を確認してください。");
-                }
-
-                if (captureMic == null || string.IsNullOrEmpty(captureMic.Id))
-                {
-                    throw new InvalidOperationException("既定設定対象の録音デバイス(DA80)を特定できませんでした。サウンド設定を確認してください。");
-                }
-
                 AppendLog("[4/5] 再生: Plantronics DA80 (Headset/Earphone) を既定/通信へ設定します。");
-                SetDefaultWithRefreshOrThrow(playbackHeadset, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications }, ResolveBusinessPlaybackPrimary, "再生デバイス(DA80)");
+                SetDefaultOrThrow(playbackHeadset.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
                 AppendLog("      完了");
 
                 AppendLog("[5/5] 録音: Plantronics DA80 (Mic/Headset) を既定/通信へ設定します。");
-                SetDefaultWithRefreshOrThrow(captureMic, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications }, ResolveBusinessCapturePrimary, "録音デバイス(DA80)");
+                SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
                 AppendLog("      完了");
 
                 AppendLog(string.Empty);
                 AppendLog("通常業務用への復帰が完了しました。");
                 UpdateDefaultDeviceLabels();
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に通常業務モードです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "通常業務用への復帰が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "通常業務用への復帰が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 AppendLog(string.Empty);
                 AppendException("[ERROR] 通常業務用への復帰に失敗しました", ex);
-
-                bool isMissingDeviceError =
-                    ex is InvalidOperationException &&
-                    ex.Message != null &&
-                    ex.Message.IndexOf("[未検出デバイス]", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                if (isMissingDeviceError)
-                {
-                    AppendLog("手動確認のためサウンド設定を開きます。");
-                    DialogResult dialogResult = MessageBox.Show(
-                        this,
-                        "通常業務用への復帰に失敗しました。\r\n\r\n" +
-                        "[原因]\r\n" + ex.Message + "\r\n\r\n" +
-                        "[対応]\r\n" +
-                        "1. OK を押すと Windows サウンド設定を開きます。\r\n" +
-                        "2. 上記デバイスの接続/有効化を確認してください。",
-                        "エラー",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-
-                    if (dialogResult == DialogResult.OK)
-                    {
-                        TryOpenSoundSettings();
-                    }
-                    return;
-                }
-
-                bool isUnpluggedDeviceError =
-                    ex is InvalidOperationException &&
-                    ex.Message != null &&
-                    ex.Message.IndexOf("[未接続デバイス]", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                if (isUnpluggedDeviceError)
-                {
-                    AppendLog("手動確認のためサウンド設定を開きます。");
-                    DialogResult dialogResult = MessageBox.Show(
-                        this,
-                        "通常業務用への復帰に失敗しました。\r\n\r\n" +
-                        "[原因]\r\n" + ex.Message + "\r\n\r\n" +
-                        "[対応]\r\n" +
-                        "1. DA80 デバイスの接続状態を確認してください。\r\n" +
-                        "2. OK を押すと Windows サウンド設定を開きます。",
-                        "エラー",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-
-                    if (dialogResult == DialogResult.OK)
-                    {
-                        TryOpenSoundSettings();
-                    }
-                    return;
-                }
-
                 MessageBox.Show(
                     this,
                     "通常業務用への復帰に失敗しました。\r\n\r\n" + ex.Message,
@@ -1741,11 +1383,6 @@ namespace WindowsAudioSetup
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
-            }
-
-            if (playbackDefault == null && playbackComm == null && recordingDefault == null && recordingComm == null)
-            {
-                AppendLog("[INFO] 再生/録音の既定デバイスが未設定の可能性があります。Windows のサウンド設定で既定と既定の通信デバイスを確認してください。");
             }
 
             DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });
@@ -1796,249 +1433,6 @@ namespace WindowsAudioSetup
                     throw new InvalidOperationException("既定デバイスの設定に失敗しました。Role=" + roles[i]);
                 }
             }
-        }
-
-        private void SetDefaultWithRefreshOrThrow(DeviceInfo targetDevice, ERole[] roles, Func<DeviceInfo> refreshResolver, string category)
-        {
-            if (targetDevice == null || string.IsNullOrEmpty(targetDevice.Id))
-            {
-                throw new InvalidOperationException(category + " の既定設定対象が未検出です。");
-            }
-
-            DeviceInfo current = targetDevice;
-            int attempt;
-            for (attempt = 0; attempt < 3; attempt++)
-            {
-                try
-                {
-                    SetDefaultOrThrow(current.Id, roles);
-                    return;
-                }
-                catch
-                {
-                    DeviceInfo refreshed = ResolveRefreshedTarget(current, refreshResolver);
-                    if (refreshed != null && !string.Equals(refreshed.Id, current.Id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        AppendLog("      [WARN] " + category + " のデバイスIDを再解決して再試行します。");
-                        current = refreshed;
-                        System.Threading.Thread.Sleep(300);
-                        continue;
-                    }
-
-                    if (attempt < 2)
-                    {
-                        DeviceInfo fallback = FindFirstConnectedPlantronicsDevice(current.Flow);
-                        if (fallback != null && !string.IsNullOrEmpty(fallback.Id) && !string.Equals(fallback.Id, current.Id, StringComparison.OrdinalIgnoreCase))
-                        {
-                            AppendLog("      [WARN] " + category + " の既定設定対象をフォールバックへ切り替えます: " + fallback.Name);
-                            current = fallback;
-                            System.Threading.Thread.Sleep(250);
-                            continue;
-                        }
-                    }
-
-                    throw;
-                }
-            }
-
-            throw new InvalidOperationException(category + " の既定デバイス設定に失敗しました。再試行しても設定できませんでした。");
-        }
-
-        private DeviceInfo ResolveRefreshedTarget(DeviceInfo current, Func<DeviceInfo> refreshResolver)
-        {
-            DeviceInfo refreshed = ResolveCurrentDeviceByIdOrName(current);
-            if (refreshed != null)
-            {
-                return refreshed;
-            }
-
-            if (refreshResolver != null)
-            {
-                refreshed = refreshResolver();
-            }
-
-            if (refreshed == null || string.IsNullOrEmpty(refreshed.Id))
-            {
-                return null;
-            }
-
-            return refreshed;
-        }
-
-        private DeviceInfo ResolveCurrentDeviceByIdOrName(DeviceInfo expected)
-        {
-            if (expected == null)
-            {
-                return null;
-            }
-
-            List<DeviceInfo> devices = AudioHelper.Enumerate(expected.Flow);
-            if (devices == null || devices.Count == 0)
-            {
-                return null;
-            }
-
-            DeviceInfo nameMatch = null;
-
-            int i;
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Id))
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrEmpty(expected.Id) && string.Equals(device.Id, expected.Id, StringComparison.OrdinalIgnoreCase))
-                {
-                    return device;
-                }
-
-                if (!string.IsNullOrEmpty(expected.Name) && !string.IsNullOrEmpty(device.Name) &&
-                    string.Equals(device.Name, expected.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (nameMatch == null || IsBetterActiveCandidate(device, nameMatch))
-                    {
-                        nameMatch = device;
-                    }
-                }
-            }
-
-            return nameMatch;
-        }
-
-        private static bool IsBetterActiveCandidate(DeviceInfo candidate, DeviceInfo currentBest)
-        {
-            if (candidate == null)
-            {
-                return false;
-            }
-
-            if (currentBest == null)
-            {
-                return true;
-            }
-
-            bool candidateActive = IsDeviceActive(candidate.State);
-            bool currentBestActive = IsDeviceActive(currentBest.State);
-            if (candidateActive && !currentBestActive)
-            {
-                return true;
-            }
-
-            if (!candidateActive && currentBestActive)
-            {
-                return false;
-            }
-
-            bool candidateDisabled = (candidate.State & 2) == 2;
-            bool currentBestDisabled = (currentBest.State & 2) == 2;
-            if (!candidateDisabled && currentBestDisabled)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private DeviceInfo ResolveBusinessPlaybackPrimary()
-        {
-            return ResolveBusinessPlaybackPrimary(FindBestPlantronicsRenderHeadset());
-        }
-
-        private DeviceInfo ResolveBusinessCapturePrimary()
-        {
-            return ResolveBusinessCapturePrimary(FindBestPlantronicsCaptureMic());
-        }
-
-        private DeviceInfo ResolveBusinessPlaybackPrimary(DeviceInfo currentPrimary)
-        {
-            DeviceInfo current = ResolveCurrentDeviceByIdOrName(currentPrimary) ?? currentPrimary;
-            if (current != null && !IsDeviceUnplugged(current.State))
-            {
-                return current;
-            }
-
-            DeviceInfo fallback = FindFirstConnectedPlantronicsDevice(EDataFlow.eRender);
-            if (fallback != null)
-            {
-                return fallback;
-            }
-
-            return current;
-        }
-
-        private DeviceInfo ResolveBusinessCapturePrimary(DeviceInfo currentPrimary)
-        {
-            DeviceInfo current = ResolveCurrentDeviceByIdOrName(currentPrimary) ?? currentPrimary;
-            if (current != null && !IsDeviceUnplugged(current.State))
-            {
-                return current;
-            }
-
-            DeviceInfo fallback = FindFirstConnectedPlantronicsDevice(EDataFlow.eCapture);
-            if (fallback != null)
-            {
-                return fallback;
-            }
-
-            return current;
-        }
-
-        private DeviceInfo FindFirstConnectedPlantronicsDevice(EDataFlow flow)
-        {
-            List<DeviceInfo> devices = AudioHelper.Enumerate(flow);
-            DeviceInfo bestActive = null;
-            DeviceInfo bestConnected = null;
-
-            int i;
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Name) || string.IsNullOrEmpty(device.Id))
-                {
-                    continue;
-                }
-
-                if (!IsPlantronicsDa80Name(device.Name))
-                {
-                    continue;
-                }
-
-                if (IsDeviceUnplugged(device.State))
-                {
-                    continue;
-                }
-
-                if (IsDeviceActive(device.State))
-                {
-                    if (bestActive == null || IsBetterActiveCandidate(device, bestActive))
-                    {
-                        bestActive = device;
-                    }
-                }
-                else if ((device.State & 2) != 2)
-                {
-                    if (bestConnected == null || IsBetterActiveCandidate(device, bestConnected))
-                    {
-                        bestConnected = device;
-                    }
-                }
-            }
-
-            return bestActive ?? bestConnected;
-        }
-
-        private static bool IsPlantronicsDa80Name(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return false;
-            }
-
-            return name.IndexOf("Plantronics", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   name.IndexOf("Poly", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   name.IndexOf("DA80", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private bool IsAutomaticSetupAlreadyApplied(DeviceInfo playbackPlantronics, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo capturePlantronics)

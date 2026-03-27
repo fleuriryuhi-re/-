@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -131,133 +129,6 @@ namespace WindowsAudioSetup
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetDllDirectory(string lpPathName);
-    }
-
-    internal static class VoicemeeterHelper
-    {
-        public static bool TryStartVoicemeeterX64(out string message)
-        {
-            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-            int r;
-            for (r = 0; r < runningNames.Length; r++)
-            {
-                if (Process.GetProcessesByName(runningNames[r]).Length > 0)
-                {
-                    message = "Voicemeeter x64 は既に起動しています。(" + runningNames[r] + ")";
-                    return true;
-                }
-            }
-
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-            string[] exeCandidates = new string[]
-            {
-                Path.Combine(programFiles, "VB", "Voicemeeter", "Voicemeeter_x64.exe"),
-                Path.Combine(programFilesX86, "VB", "Voicemeeter", "Voicemeeter_x64.exe")
-            };
-
-            int i;
-            for (i = 0; i < exeCandidates.Length; i++)
-            {
-                string exePath = exeCandidates[i];
-                if (!File.Exists(exePath))
-                {
-                    continue;
-                }
-
-                Process.Start(exePath);
-                message = "Voicemeeter x64 の起動要求を送信しました。(" + Path.GetFileName(exePath) + ")";
-                return true;
-            }
-
-            message = "Voicemeeter_x64.exe が見つかりません。";
-            return false;
-        }
-
-        public static bool TryStopVoicemeeterX64(out string message)
-        {
-            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-            int i;
-            bool requestedAny = false;
-            bool allExited = true;
-            for (i = 0; i < runningNames.Length; i++)
-            {
-                Process[] list = Process.GetProcessesByName(runningNames[i]);
-                int j;
-                for (j = 0; j < list.Length; j++)
-                {
-                    try
-                    {
-                        Process p = list[j];
-                        if (p.HasExited)
-                        {
-                            continue;
-                        }
-
-                        // 強制終了ではなく通常終了を依頼する
-                        bool closeRequested = p.CloseMainWindow();
-                        if (closeRequested)
-                        {
-                            requestedAny = true;
-                            if (!p.WaitForExit(5000))
-                            {
-                                allExited = false;
-                            }
-                        }
-                        else
-                        {
-                            // メインウィンドウが取得できない場合は強制終了せず失敗扱い
-                            allExited = false;
-                        }
-                    }
-                    catch { }
-                }
-            }
-
-            if (requestedAny && allExited)
-            {
-                message = "Voicemeeter に通常終了を依頼し、終了を確認しました。";
-                return true;
-            }
-
-            if (requestedAny && !allExited)
-            {
-                message = "Voicemeeter に通常終了を依頼しましたが、終了確認できないプロセスがあります。";
-                return false;
-            }
-
-            // プロセスは存在するが通常終了依頼できないケース（ウィンドウ未取得等）
-            for (i = 0; i < runningNames.Length; i++)
-            {
-                if (Process.GetProcessesByName(runningNames[i]).Length > 0)
-                {
-                    message = "Voicemeeter は起動中ですが、通常終了を依頼できませんでした。";
-                    return false;
-                }
-            }
-
-            message = "Voicemeeter は起動していません。";
-            return true;
-        }
-
-        public static bool IsVoicemeeterX64Running()
-        {
-            string[] runningNames = new string[] { "voicemeeter_x64", "voicemeeter64", "voicemeeterx64" };
-            int i;
-            for (i = 0; i < runningNames.Length; i++)
-            {
-                if (Process.GetProcessesByName(runningNames[i]).Length > 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 
     internal sealed class DeviceInfo
@@ -294,7 +165,7 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                LastDefaultMessage = "既定デバイス取得に失敗しました。Flow=" + flow + ", Role=" + role + ", 詳細: " + ex.Message;
+                LastDefaultMessage = "譌｢螳壹ョ繝舌う繧ｹ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆縲・low=" + flow + ", Role=" + role + ", 隧ｳ邏ｰ: " + ex.Message;
                 return null;
             }
         }
@@ -311,7 +182,7 @@ namespace WindowsAudioSetup
                 {
                     if (baseKey == null)
                     {
-                        LastEnumerationMessage = "MMDevices レジストリが見つかりません。";
+                        LastEnumerationMessage = "MMDevices 繝ｬ繧ｸ繧ｹ繝医Μ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・;
                         return list;
                     }
 
@@ -337,7 +208,7 @@ namespace WindowsAudioSetup
                         {
                             DeviceInfo info = new DeviceInfo();
                             info.Id = subKeyName;
-                            info.Name = "[取得失敗] " + exItem.GetType().FullName;
+                            info.Name = "[蜿門ｾ怜､ｱ謨余 " + exItem.GetType().FullName;
                             info.State = 0;
                             info.Flow = flow;
                             list.Add(info);
@@ -347,7 +218,7 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                LastEnumerationMessage = "レジストリからのデバイス列挙に失敗しました。 詳細: " + ex.Message;
+                LastEnumerationMessage = "繝ｬ繧ｸ繧ｹ繝医Μ縺九ｉ縺ｮ繝・ヰ繧､繧ｹ蛻玲嫌縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲・隧ｳ邏ｰ: " + ex.Message;
             }
 
             return list;
@@ -369,8 +240,8 @@ namespace WindowsAudioSetup
             {
                 if (propertiesKey != null)
                 {
-                    // PKEY_Device_FriendlyName (,14) → e.g. "Speakers (THX Spatial Audio)"
-                    // PKEY_Device_DeviceDesc   (,2)  → e.g. "Speakers"  (short fallback)
+                    // PKEY_Device_FriendlyName (,14) 竊・e.g. "Speakers (THX Spatial Audio)"
+                    // PKEY_Device_DeviceDesc   (,2)  竊・e.g. "Speakers"  (short fallback)
                     name = ReadRegistryString(propertiesKey, "{a45c254e-df1c-4efd-8020-67d146a850e0},14");
                     if (string.IsNullOrEmpty(name))
                     {
@@ -650,21 +521,13 @@ namespace WindowsAudioSetup
         private Label playbackCommLabel;
         private Label recordingDefaultLabel;
         private Label recordingCommLabel;
-        private Label voicemeeterA1Label;
+        private Label statusLabel;
 
         public MainForm()
         {
             InitializeComponent();
-            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Shown += MainForm_Shown;
             this.Resize += MainForm_Resize;
-            this.FormClosing += MainForm_FormClosing;
-        }
-
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            string message;
-            VoicemeeterHelper.TryStopVoicemeeterX64(out message);
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
@@ -705,7 +568,7 @@ namespace WindowsAudioSetup
 
         private void InitializeComponent()
         {
-            this.Text = "Windows サウンド設定ツール";
+            this.Text = "Windows 繧ｵ繧ｦ繝ｳ繝芽ｨｭ螳壹ヤ繝ｼ繝ｫ";
             this.ClientSize = new Size(1220, 700);
             this.MinimumSize = new Size(1080, 640);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -715,50 +578,48 @@ namespace WindowsAudioSetup
             summaryLabel = new Label();
             summaryLabel.AutoSize = false;
             summaryLabel.Location = new Point(20, 20);
-            summaryLabel.Size = new Size(1170, 130);
+            summaryLabel.Size = new Size(1170, 100);
             summaryLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             summaryLabel.Text =
-                "自動設定内容 [開発用]\r\n" +
-                "0. Voicemeeter x64 を起動\r\n" +
-                "1. 再生: ヘッドホン (Realtek) -> 既定デバイス\r\n" +
-                "2. 再生: Voicemeeter Input -> 既定の通信デバイス\r\n" +
-                "3. 録音: Voicemeeter Out A1 -> 無効なら有効化\r\n" +
-                "4. 録音: Voicemeeter Out B1 -> 既定デバイス\r\n" +
-                "5. 録音: 外付けマイク (Realtek) -> 既定の通信デバイス\r\n" +
-                "※ 同一状態でも整合性確認のため再設定を行います";
+                "閾ｪ蜍戊ｨｭ螳壼・螳ｹ [髢狗匱逕ｨ]\r\n" +
+                "1. 蜀咲函: 繝倥ャ繝峨・繝ｳ (Realtek) -> 譌｢螳壹・繝・ヰ繧､繧ｹ\r\n" +
+                "2. 蜀咲函: Voicemeeter Input -> 譌｢螳壹・騾壻ｿ｡繝・ヰ繧､繧ｹ\r\n" +
+                "3. 骭ｲ髻ｳ: Voicemeeter Out A1 -> 辟｡蜉ｹ縺ｪ繧画怏蜉ｹ蛹悶ｒ隧ｦ陦圭r\n" +
+                "4. 骭ｲ髻ｳ: Voicemeeter Out B1 -> 譌｢螳壹・繝・ヰ繧､繧ｹ\r\n" +
+                "5. 骭ｲ髻ｳ: 螟紋ｻ倥￠繝槭う繧ｯ (Realtek) -> 譌｢螳壹・騾壻ｿ｡繝・ヰ繧､繧ｹ";
 
             applyButton = new Button();
-            applyButton.Text = "自動設定を実行";
+            applyButton.Text = "閾ｪ蜍戊ｨｭ螳壹ｒ螳溯｡・;
             applyButton.Location = new Point(20, 130);
             applyButton.Size = new Size(220, 38);
             applyButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             applyButton.Click += ApplyButton_Click;
 
             refreshButton = new Button();
-            refreshButton.Text = "デバイス一覧を更新";
+            refreshButton.Text = "繝・ヰ繧､繧ｹ荳隕ｧ繧呈峩譁ｰ";
             refreshButton.Location = new Point(255, 130);
             refreshButton.Size = new Size(240, 38);
             refreshButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             refreshButton.Click += RefreshButton_Click;
 
             openSoundButton = new Button();
-            openSoundButton.Text = "サウンド設定を開く";
+            openSoundButton.Text = "繧ｵ繧ｦ繝ｳ繝芽ｨｭ螳壹ｒ髢九￥";
             openSoundButton.Location = new Point(510, 130);
             openSoundButton.Size = new Size(240, 38);
             openSoundButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             openSoundButton.Click += OpenSoundButton_Click;
 
             restoreBusinessButton = new Button();
-            restoreBusinessButton.Text = "通常業務へ戻す (Voicemeeter無効化 + Realtek既定)";
+            restoreBusinessButton.Text = "騾壼ｸｸ讌ｭ蜍吶∈謌ｻ縺・(Voicemeeter辟｡蜉ｹ蛹・+ Realtek譌｢螳・";
             restoreBusinessButton.Location = new Point(765, 130);
             restoreBusinessButton.Size = new Size(425, 38);
             restoreBusinessButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             restoreBusinessButton.Click += RestoreBusinessButton_Click;
 
             defaultGroupBox = new GroupBox();
-            defaultGroupBox.Text = "検出された既定デバイス";
+            defaultGroupBox.Text = "讀懷・縺輔ｌ縺滓里螳壹ョ繝舌う繧ｹ";
             defaultGroupBox.Location = new Point(20, 180);
-            defaultGroupBox.Size = new Size(1170, 180);
+            defaultGroupBox.Size = new Size(1170, 150);
             defaultGroupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             playbackDefaultLabel = new Label();
@@ -785,20 +646,13 @@ namespace WindowsAudioSetup
             recordingCommLabel.Size = new Size(1130, 26);
             recordingCommLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-            voicemeeterA1Label = new Label();
-            voicemeeterA1Label.AutoSize = false;
-            voicemeeterA1Label.Location = new Point(15, 144);
-            voicemeeterA1Label.Size = new Size(1130, 26);
-            voicemeeterA1Label.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-
             defaultGroupBox.Controls.Add(playbackDefaultLabel);
             defaultGroupBox.Controls.Add(playbackCommLabel);
             defaultGroupBox.Controls.Add(recordingDefaultLabel);
             defaultGroupBox.Controls.Add(recordingCommLabel);
-            defaultGroupBox.Controls.Add(voicemeeterA1Label);
 
             playbackGroupBox = new GroupBox();
-            playbackGroupBox.Text = "再生デバイス一覧";
+            playbackGroupBox.Text = "蜀咲函繝・ヰ繧､繧ｹ荳隕ｧ";
             playbackGroupBox.Location = new Point(20, 345);
             playbackGroupBox.Size = new Size(575, 180);
             playbackGroupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -810,12 +664,12 @@ namespace WindowsAudioSetup
             playbackList.View = View.Details;
             playbackList.FullRowSelect = true;
             playbackList.GridLines = true;
-            playbackList.Columns.Add("状態", 100);
-            playbackList.Columns.Add("デバイス名", 420);
+            playbackList.Columns.Add("迥ｶ諷・, 100);
+            playbackList.Columns.Add("繝・ヰ繧､繧ｹ蜷・, 420);
             playbackGroupBox.Controls.Add(playbackList);
 
             recordingGroupBox = new GroupBox();
-            recordingGroupBox.Text = "録音デバイス一覧";
+            recordingGroupBox.Text = "骭ｲ髻ｳ繝・ヰ繧､繧ｹ荳隕ｧ";
             recordingGroupBox.Location = new Point(615, 345);
             recordingGroupBox.Size = new Size(575, 180);
             recordingGroupBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -827,8 +681,8 @@ namespace WindowsAudioSetup
             recordingList.View = View.Details;
             recordingList.FullRowSelect = true;
             recordingList.GridLines = true;
-            recordingList.Columns.Add("状態", 100);
-            recordingList.Columns.Add("デバイス名", 420);
+            recordingList.Columns.Add("迥ｶ諷・, 100);
+            recordingList.Columns.Add("繝・ヰ繧､繧ｹ蜷・, 420);
             recordingGroupBox.Controls.Add(recordingList);
 
             logBox = new TextBox();
@@ -839,6 +693,13 @@ namespace WindowsAudioSetup
             logBox.ReadOnly = true;
             logBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
+            statusLabel = new Label();
+            statusLabel.AutoSize = false;
+            statusLabel.Location = new Point(20, 620);
+            statusLabel.Size = new Size(1170, 18);
+            statusLabel.Text = "蠕・ｩ滉ｸｭ";
+            statusLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
             this.Controls.Add(summaryLabel);
             this.Controls.Add(applyButton);
             this.Controls.Add(refreshButton);
@@ -848,6 +709,7 @@ namespace WindowsAudioSetup
             this.Controls.Add(playbackGroupBox);
             this.Controls.Add(recordingGroupBox);
             this.Controls.Add(logBox);
+            this.Controls.Add(statusLabel);
 
             LayoutResponsiveControls();
         }
@@ -860,7 +722,7 @@ namespace WindowsAudioSetup
             int contentWidth = Math.Max(900, this.ClientSize.Width - (margin * 2));
 
             summaryLabel.Location = new Point(margin, margin);
-            summaryLabel.Size = new Size(contentWidth, 130);
+            summaryLabel.Size = new Size(contentWidth, 100);
 
             int buttonTop = summaryLabel.Bottom + 10;
             int buttonHeight = 38;
@@ -887,7 +749,7 @@ namespace WindowsAudioSetup
             restoreBusinessButton.Size = new Size(contentWidth - (restoreBusinessButton.Left - margin), buttonHeight);
 
             defaultGroupBox.Location = new Point(margin, applyButton.Bottom + 12);
-            defaultGroupBox.Size = new Size(contentWidth, 180);
+            defaultGroupBox.Size = new Size(contentWidth, 150);
 
             int defaultLabelWidth = defaultGroupBox.ClientSize.Width - 30;
             playbackDefaultLabel.Location = new Point(15, 24);
@@ -898,13 +760,13 @@ namespace WindowsAudioSetup
             recordingDefaultLabel.Size = new Size(defaultLabelWidth, 26);
             recordingCommLabel.Location = new Point(15, 114);
             recordingCommLabel.Size = new Size(defaultLabelWidth, 26);
-            voicemeeterA1Label.Location = new Point(15, 144);
-            voicemeeterA1Label.Size = new Size(defaultLabelWidth, 26);
 
             int listsTop = defaultGroupBox.Bottom + sectionGap;
+            int statusHeight = 18;
             int bottomMargin = 20;
             int logGap = 15;
-            int remainingHeight = this.ClientSize.Height - listsTop - bottomMargin;
+            int statusGap = 10;
+            int remainingHeight = this.ClientSize.Height - listsTop - bottomMargin - statusHeight - statusGap;
             int logHeight = Math.Max(80, remainingHeight / 3);
             int listsHeight = Math.Max(180, remainingHeight - logHeight - logGap);
 
@@ -924,6 +786,9 @@ namespace WindowsAudioSetup
 
             logBox.Location = new Point(margin, playbackGroupBox.Bottom + logGap);
             logBox.Size = new Size(contentWidth, logHeight);
+
+            statusLabel.Location = new Point(margin, logBox.Bottom + statusGap);
+            statusLabel.Size = new Size(contentWidth, statusHeight);
 
             UpdateListColumns(playbackList);
             UpdateListColumns(recordingList);
@@ -1004,15 +869,19 @@ namespace WindowsAudioSetup
 
         private void RefreshDevices()
         {
+            statusLabel.Text = "繝・ヰ繧､繧ｹ荳隕ｧ繧呈峩譁ｰ荳ｭ...";
+            statusLabel.Refresh();
             this.Update();
             playbackList.Items.Clear();
             recordingList.Items.Clear();
-            logBox.AppendText("デバイス一覧を更新しています...\r\n");
+            logBox.AppendText("繝・ヰ繧､繧ｹ荳隕ｧ繧呈峩譁ｰ縺励※縺・∪縺・..\r\n");
 
-            SafeAddDevicesToList(EDataFlow.eRender, "再生");
-            SafeAddDevicesToList(EDataFlow.eCapture, "録音");
+            SafeAddDevicesToList(EDataFlow.eRender, "蜀咲函");
+            SafeAddDevicesToList(EDataFlow.eCapture, "骭ｲ髻ｳ");
             SafeUpdateDefaultDeviceLabels();
-            AppendLog("デバイス一覧の更新が終了しました。");
+            statusLabel.Text = "繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ譖ｴ譁ｰ縺檎ｵゆｺ・＠縺ｾ縺励◆縲・;
+            statusLabel.Refresh();
+            AppendLog("繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ譖ｴ譁ｰ縺檎ｵゆｺ・＠縺ｾ縺励◆縲・);
         }
 
         private void SafeRefreshDevices()
@@ -1023,13 +892,13 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                AppendException("[ERROR] デバイス一覧の取得に失敗しました", ex);
-                playbackDefaultLabel.Text = "再生 既定: 取得失敗";
-                playbackCommLabel.Text = "再生 通信: 取得失敗";
-                recordingDefaultLabel.Text = "録音 既定: 取得失敗";
-                recordingCommLabel.Text = "録音 通信: 取得失敗";
-                voicemeeterA1Label.Text = "Voicemeeter Out A1: 取得失敗";
-                AppendLog("デバイス一覧の更新に失敗しました。");
+                AppendException("[ERROR] 繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆", ex);
+                playbackDefaultLabel.Text = "蜀咲函 譌｢螳・ 蜿門ｾ怜､ｱ謨・;
+                playbackCommLabel.Text = "蜀咲函 騾壻ｿ｡: 蜿門ｾ怜､ｱ謨・;
+                recordingDefaultLabel.Text = "骭ｲ髻ｳ 譌｢螳・ 蜿門ｾ怜､ｱ謨・;
+                recordingCommLabel.Text = "骭ｲ髻ｳ 騾壻ｿ｡: 蜿門ｾ怜､ｱ謨・;
+                statusLabel.Text = "繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ譖ｴ譁ｰ縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲・;
+                AppendLog("繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ譖ｴ譁ｰ縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲・);
             }
         }
 
@@ -1041,8 +910,8 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                AppendException("[ERROR] " + label + "デバイス一覧の取得に失敗しました", ex);
-                ListViewItem item = new ListViewItem("取得失敗");
+                AppendException("[ERROR] " + label + "繝・ヰ繧､繧ｹ荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆", ex);
+                ListViewItem item = new ListViewItem("蜿門ｾ怜､ｱ謨・);
                 item.SubItems.Add(ex.GetType().FullName);
                 GetListViewForFlow(flow).Items.Add(item);
             }
@@ -1056,12 +925,11 @@ namespace WindowsAudioSetup
             }
             catch (Exception ex)
             {
-                AppendException("[ERROR] 既定デバイス表示の更新に失敗しました", ex);
-                playbackDefaultLabel.Text = "再生 既定: 取得失敗";
-                playbackCommLabel.Text = "再生 通信: 取得失敗";
-                recordingDefaultLabel.Text = "録音 既定: 取得失敗";
-                recordingCommLabel.Text = "録音 通信: 取得失敗";
-                voicemeeterA1Label.Text = "Voicemeeter Out A1: 取得失敗";
+                AppendException("[ERROR] 譌｢螳壹ョ繝舌う繧ｹ陦ｨ遉ｺ縺ｮ譖ｴ譁ｰ縺ｫ螟ｱ謨励＠縺ｾ縺励◆", ex);
+                playbackDefaultLabel.Text = "蜀咲函 譌｢螳・ 蜿門ｾ怜､ｱ謨・;
+                playbackCommLabel.Text = "蜀咲函 騾壻ｿ｡: 蜿門ｾ怜､ｱ謨・;
+                recordingDefaultLabel.Text = "骭ｲ髻ｳ 譌｢螳・ 蜿門ｾ怜､ｱ謨・;
+                recordingCommLabel.Text = "骭ｲ髻ｳ 騾壻ｿ｡: 蜿門ｾ怜､ｱ謨・;
             }
         }
 
@@ -1097,8 +965,8 @@ namespace WindowsAudioSetup
                 return false;
             }
 
-            // DEVICE_STATE_ACTIVE (1) — mmsys.cpl 通常表示
-            // DEVICE_STATE_DISABLED (2) — mmsys.cpl「無効なデバイスの表示」で出るもの
+            // DEVICE_STATE_ACTIVE (1) 窶・mmsys.cpl 騾壼ｸｸ陦ｨ遉ｺ
+            // DEVICE_STATE_DISABLED (2) 窶・mmsys.cpl縲檎┌蜉ｹ縺ｪ繝・ヰ繧､繧ｹ縺ｮ陦ｨ遉ｺ縲阪〒蜃ｺ繧九ｂ縺ｮ
             return (device.State & 1) == 1 || (device.State & 2) == 2;
         }
 
@@ -1154,114 +1022,75 @@ namespace WindowsAudioSetup
 
                 if (playbackHeadphones == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『ヘッドホン (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("蜀咲函繝・ヰ繧､繧ｹ縲弱・繝・ラ繝帙Φ (Realtek)縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
                 if (playbackVmInput == null)
                 {
-                    throw new InvalidOperationException(
-                        "再生デバイス『Voicemeeter Input』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("蜀咲函繝・ヰ繧､繧ｹ縲桟oicemeeter Input縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
                 if (captureA1 == null)
                 {
-                    throw new InvalidOperationException(
-                        "録音デバイス『Voicemeeter Out A1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("骭ｲ髻ｳ繝・ヰ繧､繧ｹ縲桟oicemeeter Out A1縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
                 if (captureB1 == null)
                 {
-                    throw new InvalidOperationException(
-                        "録音デバイス『Voicemeeter Out B1』が見つかりません。Voicemeeter がインストールされていない可能性があります。\r\n" +
-                        "VB-Audio 公式サイトから Voicemeeter x64 をインストールし、PC 再起動後に再実行してください。");
+                    throw new InvalidOperationException("骭ｲ髻ｳ繝・ヰ繧､繧ｹ縲桟oicemeeter Out B1縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
                 if (captureMic == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("骭ｲ髻ｳ繝・ヰ繧､繧ｹ縲主､紋ｻ倥￠繝槭う繧ｯ (Realtek)縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
 
-                // Debug: Check each condition separately
-                bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
-                bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-                
-                bool alreadyApplied = playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-                if (alreadyApplied)
-                {
-                    AppendLog("自動設定は既に適用済みですが、整合性確認のため再適用を実行します。");
-                }
-
-                AppendLog("[前処理-0] Voicemeeter x64 を起動します。");
-                string vmStartMessage;
-                if (!VoicemeeterHelper.TryStartVoicemeeterX64(out vmStartMessage))
-                {
-                    AppendImportantLog("      [WARN] " + vmStartMessage);
-                }
-                else
-                {
-                    AppendImportantLog("      " + vmStartMessage);
-                    System.Threading.Thread.Sleep(2000);
-                }
-
-                // [前処理] Voicemeeter デバイスを先に全て有効化してから既定設定を行う
-                AppendLog("[前処理] Voicemeeter デバイスの有効化を確認します。");
+                // [蜑榊・逅・ Voicemeeter 繝・ヰ繧､繧ｹ繧貞・縺ｫ蜈ｨ縺ｦ譛牙柑蛹悶＠縺ｦ縺九ｉ譌｢螳夊ｨｭ螳壹ｒ陦後≧
+                AppendLog("[蜑榊・逅・ Voicemeeter 繝・ヰ繧､繧ｹ縺ｮ譛牙柑蛹悶ｒ遒ｺ隱阪＠縺ｾ縺吶・);
                 bool anyEnabled = false;
                 anyEnabled |= EnsureEnabled(playbackVmInput);
                 anyEnabled |= EnsureEnabled(captureA1);
                 anyEnabled |= EnsureEnabled(captureB1);
                 if (anyEnabled)
                 {
-                    AppendLog("      Windows に反映させるため少々待機します...");
+                    AppendLog("      Windows 縺ｫ蜿肴丐縺輔○繧九◆繧∝ｰ代・ｾ・ｩ溘＠縺ｾ縺・..");
                     System.Threading.Thread.Sleep(1500);
                 }
                 else
                 {
-                    AppendLog("      全デバイス既に有効です。");
+                    AppendLog("      蜈ｨ繝・ヰ繧､繧ｹ譌｢縺ｫ譛牙柑縺ｧ縺吶・);
                 }
 
-                AppendLog("[1/5] 再生: " + playbackHeadphones.Name + " を既定のデバイスへ設定します。");
+                AppendLog("[1/5] 蜀咲函: " + playbackHeadphones.Name + " 繧呈里螳壹・繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(playbackHeadphones.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                AppendLog("      完了");
+                AppendLog("      螳御ｺ・);
 
-                AppendLog("[2/5] 再生: Voicemeeter Input を既定の通信デバイスへ設定します。");
+                AppendLog("[2/5] 蜀咲函: Voicemeeter Input 繧呈里螳壹・騾壻ｿ｡繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(playbackVmInput.Id, new ERole[] { ERole.eCommunications });
-                AppendLog("      完了");
+                AppendLog("      螳御ｺ・);
 
-                AppendLog("[3/5] 録音: Voicemeeter Out A1 の有効化を確認します。");
-                AppendLog("      有効化済みです。");
+                AppendLog("[3/5] 骭ｲ髻ｳ: Voicemeeter Out A1 縺ｮ譛牙柑蛹悶ｒ遒ｺ隱阪＠縺ｾ縺吶・);
+                AppendLog("      譛牙柑蛹匁ｸ医∩縺ｧ縺吶・);
 
-                AppendLog("[4/5] 録音: Voicemeeter Out B1 を既定のデバイスへ設定します。");
+                AppendLog("[4/5] 骭ｲ髻ｳ: Voicemeeter Out B1 繧呈里螳壹・繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(captureB1.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-                AppendLog("      完了");
+                AppendLog("      螳御ｺ・);
 
-                AppendLog("[5/5] 録音: " + captureMic.Name + " を既定の通信デバイスへ設定します。");
+                AppendLog("[5/5] 骭ｲ髻ｳ: " + captureMic.Name + " 繧呈里螳壹・騾壻ｿ｡繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eCommunications });
-                AppendLog("      完了");
-
-                DisableNonTargetDevices(playbackHeadphones, playbackVmInput, captureB1, captureMic, captureA1);
+                AppendLog("      螳御ｺ・);
 
                 AppendLog(string.Empty);
-                AppendLog("すべての設定が完了しました。");
+                AppendLog("縺吶∋縺ｦ縺ｮ險ｭ螳壹′螳御ｺ・＠縺ｾ縺励◆縲・);
                 UpdateDefaultDeviceLabels();
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に自動設定済みです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "自動設定が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "閾ｪ蜍戊ｨｭ螳壹′螳御ｺ・＠縺ｾ縺励◆縲・, "螳御ｺ・, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 AppendLog(string.Empty);
-                AppendException("[ERROR] 自動設定に失敗しました", ex);
-                AppendLog("手動フォールバック用にサウンド設定を開きます。");
+                AppendException("[ERROR] 閾ｪ蜍戊ｨｭ螳壹↓螟ｱ謨励＠縺ｾ縺励◆", ex);
+                AppendLog("謇句虚繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ逕ｨ縺ｫ繧ｵ繧ｦ繝ｳ繝芽ｨｭ螳壹ｒ髢九″縺ｾ縺吶・);
                 Process.Start("control.exe", "mmsys.cpl");
                 MessageBox.Show(
                     this,
-                    "自動設定に失敗しました。\r\n\r\n" + ex.Message + "\r\n\r\nサウンド設定を開いたので、必要に応じて仮想オーディオデバイス操作マニュアルの3ページを確認し手動で仕上げてください。",
-                    "エラー",
+                    "閾ｪ蜍戊ｨｭ螳壹↓螟ｱ謨励＠縺ｾ縺励◆縲・r\n\r\n" + ex.Message + "\r\n\r\n繧ｵ繧ｦ繝ｳ繝芽ｨｭ螳壹ｒ髢九＞縺溘・縺ｧ縲∝ｿ・ｦ√↓蠢懊§縺ｦ謇句虚縺ｧ莉穂ｸ翫￡縺ｦ縺上□縺輔＞縲・,
+                    "繧ｨ繝ｩ繝ｼ",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }
@@ -1273,7 +1102,7 @@ namespace WindowsAudioSetup
             {
                 bool ok = AudioHelper.SetVisible(device.Id, true);
                 string label = device.Name ?? device.Id;
-                AppendLog("      " + label + ": " + (ok ? "有効化しました。" : "有効化に失敗しました。手動で有効化してください。"));
+                AppendLog("      " + label + ": " + (ok ? "譛牙柑蛹悶＠縺ｾ縺励◆縲・ : "譛牙柑蛹悶↓螟ｱ謨励＠縺ｾ縺励◆縲よ焔蜍輔〒譛牙柑蛹悶＠縺ｦ縺上□縺輔＞縲・));
                 return ok;
             }
             return false;
@@ -1291,91 +1120,67 @@ namespace WindowsAudioSetup
 
                 if (playbackHeadphones == null)
                 {
-                    throw new InvalidOperationException("再生デバイス『ヘッドホン (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("蜀咲函繝・ヰ繧､繧ｹ縲弱・繝・ラ繝帙Φ (Realtek)縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
                 if (captureMic == null)
                 {
-                    throw new InvalidOperationException("録音デバイス『外付けマイク (Realtek)』が見つかりません。");
+                    throw new InvalidOperationException("骭ｲ髻ｳ繝・ヰ繧､繧ｹ縲主､紋ｻ倥￠繝槭う繧ｯ (Realtek)縲上′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・);
                 }
 
-                bool alreadyApplied = IsBusinessSetupAlreadyApplied(playbackHeadphones, captureMic, vmInput, captureA1, captureB1);
-                if (alreadyApplied)
-                {
-                    AppendLog("通常業務構成は既に適用済みですが、整合性確認のため再適用を実行します。");
-                }
-
-                AppendLog("[前処理] Voicemeeter を終了します。");
-                string vmStopMessage;
-                if (!VoicemeeterHelper.TryStopVoicemeeterX64(out vmStopMessage))
-                {
-                    AppendLog("      [WARN] " + vmStopMessage);
-                }
-                else
-                {
-                    AppendLog("      " + vmStopMessage);
-                }
-
-                AppendLog("[1/5] 再生: Voicemeeter Input を無効化します。");
+                AppendLog("[1/5] 蜀咲函: Voicemeeter Input 繧堤┌蜉ｹ蛹悶＠縺ｾ縺吶・);
                 if (vmInput != null)
                 {
                     bool ok = AudioHelper.SetVisible(vmInput.Id, false);
-                    AppendLog(ok ? "      完了" : "      自動無効化は失敗しました。必要なら手動で無効化してください。");
+                    AppendLog(ok ? "      螳御ｺ・ : "      閾ｪ蜍慕┌蜉ｹ蛹悶・螟ｱ謨励＠縺ｾ縺励◆縲ょｿ・ｦ√↑繧画焔蜍輔〒辟｡蜉ｹ蛹悶＠縺ｦ縺上□縺輔＞縲・);
                 }
                 else
                 {
-                    AppendLog("      デバイスが見つからないためスキップします。");
+                    AppendLog("      繝・ヰ繧､繧ｹ縺瑚ｦ九▽縺九ｉ縺ｪ縺・◆繧√せ繧ｭ繝・・縺励∪縺吶・);
                 }
 
-                AppendLog("[2/5] 録音: Voicemeeter Out A1 を無効化します。");
+                AppendLog("[2/5] 骭ｲ髻ｳ: Voicemeeter Out A1 繧堤┌蜉ｹ蛹悶＠縺ｾ縺吶・);
                 if (captureA1 != null)
                 {
                     bool ok = AudioHelper.SetVisible(captureA1.Id, false);
-                    AppendLog(ok ? "      完了" : "      自動無効化は失敗しました。必要なら手動で無効化してください。");
+                    AppendLog(ok ? "      螳御ｺ・ : "      閾ｪ蜍慕┌蜉ｹ蛹悶・螟ｱ謨励＠縺ｾ縺励◆縲ょｿ・ｦ√↑繧画焔蜍輔〒辟｡蜉ｹ蛹悶＠縺ｦ縺上□縺輔＞縲・);
                 }
                 else
                 {
-                    AppendLog("      デバイスが見つからないためスキップします。");
+                    AppendLog("      繝・ヰ繧､繧ｹ縺瑚ｦ九▽縺九ｉ縺ｪ縺・◆繧√せ繧ｭ繝・・縺励∪縺吶・);
                 }
 
-                AppendLog("[3/5] 録音: Voicemeeter Out B1 を無効化します。");
+                AppendLog("[3/5] 骭ｲ髻ｳ: Voicemeeter Out B1 繧堤┌蜉ｹ蛹悶＠縺ｾ縺吶・);
                 if (captureB1 != null)
                 {
                     bool ok = AudioHelper.SetVisible(captureB1.Id, false);
-                    AppendLog(ok ? "      完了" : "      自動無効化は失敗しました。必要なら手動で無効化してください。");
+                    AppendLog(ok ? "      螳御ｺ・ : "      閾ｪ蜍慕┌蜉ｹ蛹悶・螟ｱ謨励＠縺ｾ縺励◆縲ょｿ・ｦ√↑繧画焔蜍輔〒辟｡蜉ｹ蛹悶＠縺ｦ縺上□縺輔＞縲・);
                 }
                 else
                 {
-                    AppendLog("      デバイスが見つからないためスキップします。");
+                    AppendLog("      繝・ヰ繧､繧ｹ縺瑚ｦ九▽縺九ｉ縺ｪ縺・◆繧√せ繧ｭ繝・・縺励∪縺吶・);
                 }
 
-                AppendLog("[4/5] 再生: " + playbackHeadphones.Name + " を既定/通信デバイスへ設定します。");
+                AppendLog("[4/5] 蜀咲函: " + playbackHeadphones.Name + " 繧呈里螳・騾壻ｿ｡繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(playbackHeadphones.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-                AppendLog("      完了");
+                AppendLog("      螳御ｺ・);
 
-                AppendLog("[5/5] 録音: " + captureMic.Name + " を既定/通信デバイスへ設定します。");
+                AppendLog("[5/5] 骭ｲ髻ｳ: " + captureMic.Name + " 繧呈里螳・騾壻ｿ｡繝・ヰ繧､繧ｹ縺ｸ險ｭ螳壹＠縺ｾ縺吶・);
                 SetDefaultOrThrow(captureMic.Id, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-                AppendLog("      完了");
+                AppendLog("      螳御ｺ・);
 
                 AppendLog(string.Empty);
-                AppendLog("通常業務へ戻す が完了しました。");
+                AppendLog("騾壼ｸｸ讌ｭ蜍吶∈謌ｻ縺・縺悟ｮ御ｺ・＠縺ｾ縺励◆縲・);
                 UpdateDefaultDeviceLabels();
-                if (alreadyApplied)
-                {
-                    MessageBox.Show(this, "現在の構成は既に通常業務モードです。\r\n整合性確認として再適用しました。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(this, "通常業務へ戻す が完了しました。", "完了", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(this, "騾壼ｸｸ讌ｭ蜍吶∈謌ｻ縺・縺悟ｮ御ｺ・＠縺ｾ縺励◆縲・, "螳御ｺ・, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 AppendLog(string.Empty);
-                AppendException("[ERROR] 通常業務へ戻す に失敗しました", ex);
+                AppendException("[ERROR] 騾壼ｸｸ讌ｭ蜍吶∈謌ｻ縺・縺ｫ螟ｱ謨励＠縺ｾ縺励◆", ex);
                 MessageBox.Show(
                     this,
-                    "通常業務へ戻す に失敗しました。\r\n\r\n" + ex.Message,
-                    "エラー",
+                    "騾壼ｸｸ讌ｭ蜍吶∈謌ｻ縺・縺ｫ螟ｱ謨励＠縺ｾ縺励◆縲・r\n\r\n" + ex.Message,
+                    "繧ｨ繝ｩ繝ｼ",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }
@@ -1384,68 +1189,42 @@ namespace WindowsAudioSetup
         private void UpdateDefaultDeviceLabels()
         {
             DeviceInfo playbackDefault = AudioHelper.GetDefault(EDataFlow.eRender, ERole.eConsole);
-            playbackDefaultLabel.Text = "再生 既定: " + FormatDeviceLabel(playbackDefault);
+            playbackDefaultLabel.Text = "蜀咲函 譌｢螳・ " + FormatDeviceLabel(playbackDefault);
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
             }
 
             DeviceInfo playbackComm = AudioHelper.GetDefault(EDataFlow.eRender, ERole.eCommunications);
-            playbackCommLabel.Text = "再生 通信: " + FormatDeviceLabel(playbackComm);
+            playbackCommLabel.Text = "蜀咲函 騾壻ｿ｡: " + FormatDeviceLabel(playbackComm);
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
             }
 
             DeviceInfo recordingDefault = AudioHelper.GetDefault(EDataFlow.eCapture, ERole.eConsole);
-            recordingDefaultLabel.Text = "録音 既定: " + FormatDeviceLabel(recordingDefault);
+            recordingDefaultLabel.Text = "骭ｲ髻ｳ 譌｢螳・ " + FormatDeviceLabel(recordingDefault);
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
             }
 
             DeviceInfo recordingComm = AudioHelper.GetDefault(EDataFlow.eCapture, ERole.eCommunications);
-            recordingCommLabel.Text = "録音 通信: " + FormatDeviceLabel(recordingComm);
+            recordingCommLabel.Text = "骭ｲ髻ｳ 騾壻ｿ｡: " + FormatDeviceLabel(recordingComm);
             if (!string.IsNullOrEmpty(AudioHelper.LastDefaultMessage))
             {
                 AppendLog("[WARN] " + AudioHelper.LastDefaultMessage);
             }
-
-            DeviceInfo captureA1 = FindFirstMatch(EDataFlow.eCapture, new string[] { "Voicemeeter Out A1" });
-            voicemeeterA1Label.Text = "Voicemeeter Out A1: " + FormatReadyOrDisabledLabel(captureA1);
         }
 
         private static string FormatDeviceLabel(DeviceInfo device)
         {
             if (device == null)
             {
-                return "未検出";
+                return "譛ｪ讀懷・";
             }
 
-            return device.Name + " [ステータス: " + GetDefaultStatusLabel(device.State) + "]";
-        }
-
-        private static string FormatReadyOrDisabledLabel(DeviceInfo device)
-        {
-            if (device == null)
-            {
-                return "未検出";
-            }
-
-            return device.Name + " [ステータス: " + GetReadyOrDisabledStatusLabel(device.State) + "]";
-        }
-
-        private static string GetDefaultStatusLabel(int state)
-        {
-            if ((state & 2) == 2) return "無効";
-            if ((state & 1) == 1) return "準備完了";
-            return GetStateLabel(state);
-        }
-
-        private static string GetReadyOrDisabledStatusLabel(int state)
-        {
-            if ((state & 2) == 2) return "無効";
-            return "準備完了";
+            return device.Name + " [" + GetStateLabel(device.State) + "]";
         }
 
         private void SetDefaultOrThrow(string deviceId, ERole[] roles)
@@ -1456,104 +1235,7 @@ namespace WindowsAudioSetup
                 bool ok = AudioHelper.SetDefault(deviceId, roles[i]);
                 if (!ok)
                 {
-                    throw new InvalidOperationException("既定デバイスの設定に失敗しました。Role=" + roles[i]);
-                }
-            }
-        }
-
-        private bool IsAutomaticSetupAlreadyApplied(DeviceInfo playbackHeadphones, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo captureMic)
-        {
-            bool playbackDefaultOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-            bool playbackCommOk = IsDefaultForRoles(playbackVmInput.Id, EDataFlow.eRender, new ERole[] { ERole.eCommunications });
-            bool recordingDefaultOk = IsDefaultForRoles(captureB1.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia });
-            bool recordingCommOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eCommunications });
-            // Note: Voicemeeter running status is checked separately in the caller, not here
-            return playbackDefaultOk && playbackCommOk && recordingDefaultOk && recordingCommOk;
-        }
-
-        private bool IsBusinessSetupAlreadyApplied(DeviceInfo playbackHeadphones, DeviceInfo captureMic, DeviceInfo vmInput, DeviceInfo captureA1, DeviceInfo captureB1)
-        {
-            bool playbackAllOk = IsDefaultForRoles(playbackHeadphones.Id, EDataFlow.eRender, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-            bool recordingAllOk = IsDefaultForRoles(captureMic.Id, EDataFlow.eCapture, new ERole[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications });
-            bool vmStopped = !VoicemeeterHelper.IsVoicemeeterX64Running();
-            bool vmDevicesDisabled = IsDisabledOrMissing(vmInput) && IsDisabledOrMissing(captureA1) && IsDisabledOrMissing(captureB1);
-            return playbackAllOk && recordingAllOk && vmStopped && vmDevicesDisabled;
-        }
-
-        private static bool IsDefaultForRoles(string expectedDeviceId, EDataFlow flow, ERole[] roles)
-        {
-            if (string.IsNullOrEmpty(expectedDeviceId))
-            {
-                return false;
-            }
-
-            int i;
-            for (i = 0; i < roles.Length; i++)
-            {
-                DeviceInfo current = AudioHelper.GetDefault(flow, roles[i]);
-                if (current == null || !string.Equals(current.Id, expectedDeviceId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static bool IsDisabledOrMissing(DeviceInfo device)
-        {
-            if (device == null)
-            {
-                return true;
-            }
-
-            return (device.State & 2) == 2;
-        }
-
-        private void DisableNonTargetDevices(DeviceInfo playbackHeadphones, DeviceInfo playbackVmInput, DeviceInfo captureB1, DeviceInfo captureMic, DeviceInfo captureA1)
-        {
-            AppendLog("[後処理] 対象外デバイスを無効化します。");
-
-            List<DeviceInfo> allRender = AudioHelper.Enumerate(EDataFlow.eRender);
-            int i;
-            for (i = 0; i < allRender.Count; i++)
-            {
-                DeviceInfo dev = allRender[i];
-                if (dev == null || string.IsNullOrEmpty(dev.Id))
-                {
-                    continue;
-                }
-
-                bool isTarget =
-                    (playbackHeadphones != null && string.Equals(dev.Id, playbackHeadphones.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (playbackVmInput != null && string.Equals(dev.Id, playbackVmInput.Id, StringComparison.OrdinalIgnoreCase));
-
-                if (!isTarget && (dev.State & 2) != 2)
-                {
-                    bool ok = AudioHelper.SetVisible(dev.Id, false);
-                    AppendLog("      再生 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
-                }
-            }
-
-            List<DeviceInfo> allCapture = AudioHelper.Enumerate(EDataFlow.eCapture);
-            int j;
-            for (j = 0; j < allCapture.Count; j++)
-            {
-                DeviceInfo dev = allCapture[j];
-                if (dev == null || string.IsNullOrEmpty(dev.Id))
-                {
-                    continue;
-                }
-
-                bool isTarget =
-                    (captureB1 != null && string.Equals(dev.Id, captureB1.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (captureMic != null && string.Equals(dev.Id, captureMic.Id, StringComparison.OrdinalIgnoreCase)) ||
-                    (captureA1 != null && string.Equals(dev.Id, captureA1.Id, StringComparison.OrdinalIgnoreCase));
-
-                if (!isTarget && (dev.State & 2) != 2)
-                {
-                    bool ok = AudioHelper.SetVisible(dev.Id, false);
-                    AppendLog("      録音 無効化: " + dev.Name + (ok ? " 完了" : " 失敗"));
+                    throw new InvalidOperationException("譌｢螳壹ョ繝舌う繧ｹ縺ｮ險ｭ螳壹↓螟ｱ謨励＠縺ｾ縺励◆縲３ole=" + roles[i]);
                 }
             }
         }
@@ -1595,7 +1277,7 @@ namespace WindowsAudioSetup
 
                 int score = 0;
                 if (device.Name.IndexOf("Realtek", StringComparison.OrdinalIgnoreCase) >= 0) score += 4;
-                if (device.Name.IndexOf("ヘッドホン", StringComparison.OrdinalIgnoreCase) >= 0) score += 10;
+                if (device.Name.IndexOf("繝倥ャ繝峨・繝ｳ", StringComparison.OrdinalIgnoreCase) >= 0) score += 10;
                 if (device.Name.IndexOf("Headphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 10;
                 if ((device.State & 1) == 1) score += 2;
 
@@ -1631,12 +1313,11 @@ namespace WindowsAudioSetup
 
                 int score = 0;
                 if (device.Name.IndexOf("Realtek", StringComparison.OrdinalIgnoreCase) >= 0) score += 4;
-                if (device.Name.IndexOf("マイク", StringComparison.OrdinalIgnoreCase) >= 0) score += 6;
+                if (device.Name.IndexOf("繝槭う繧ｯ", StringComparison.OrdinalIgnoreCase) >= 0) score += 6;
                 if (device.Name.IndexOf("Mic", StringComparison.OrdinalIgnoreCase) >= 0) score += 6;
                 if (device.Name.IndexOf("Microphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 6;
-                // 外付けマイクを優先し、配列マイク(マイク配列)は下げる
-                if (device.Name.IndexOf("外付け", StringComparison.OrdinalIgnoreCase) >= 0) score += 10;
-                if (device.Name.IndexOf("配列", StringComparison.OrdinalIgnoreCase) >= 0) score -= 6;
+                // 螟紋ｻ倥￠繝槭う繧ｯ繧貞━蜈医＠縲・・蛻励・繧､繧ｯ(繝槭う繧ｯ驟榊・)縺ｯ荳九￡繧・                if (device.Name.IndexOf("螟紋ｻ倥￠", StringComparison.OrdinalIgnoreCase) >= 0) score += 10;
+                if (device.Name.IndexOf("驟榊・", StringComparison.OrdinalIgnoreCase) >= 0) score -= 6;
                 if (device.Name.IndexOf("Array", StringComparison.OrdinalIgnoreCase) >= 0) score -= 6;
                 if ((device.State & 1) == 1) score += 2;
 
@@ -1652,99 +1333,12 @@ namespace WindowsAudioSetup
 
         private DeviceInfo FindBestPlantronicsRenderHeadset()
         {
-            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eRender);
-            DeviceInfo best = null;
-            int bestScore = int.MinValue;
-            int i;
-
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Name))
-                {
-                    continue;
-                }
-
-                string normalizedName = NormalizeDeviceNameForMatch(device.Name);
-                bool hasDa80 = normalizedName.IndexOf("da80", StringComparison.OrdinalIgnoreCase) >= 0;
-                bool hasBrand = normalizedName.IndexOf("plantronics", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                normalizedName.IndexOf("poly", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!hasDa80 && !hasBrand)
-                {
-                    continue;
-                }
-
-                int score = 0;
-                if (hasBrand) score += 6;
-                if (hasDa80) score += 14;
-                if (normalizedName.IndexOf("headset", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("earphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("speaker", StringComparison.OrdinalIgnoreCase) >= 0) score += 3;
-                if ((device.State & 1) == 1) score += 1;
-
-                if (score > bestScore)
-                {
-                    best = device;
-                    bestScore = score;
-                }
-            }
-
-            return best;
+            return FindFirstMatch(EDataFlow.eRender, new string[] { "Plantronics" });
         }
 
         private DeviceInfo FindBestPlantronicsCaptureMic()
         {
-            List<DeviceInfo> devices = AudioHelper.Enumerate(EDataFlow.eCapture);
-            DeviceInfo best = null;
-            int bestScore = int.MinValue;
-            int i;
-
-            for (i = 0; i < devices.Count; i++)
-            {
-                DeviceInfo device = devices[i];
-                if (device == null || string.IsNullOrEmpty(device.Name))
-                {
-                    continue;
-                }
-
-                string normalizedName = NormalizeDeviceNameForMatch(device.Name);
-                bool hasDa80 = normalizedName.IndexOf("da80", StringComparison.OrdinalIgnoreCase) >= 0;
-                bool hasBrand = normalizedName.IndexOf("plantronics", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                normalizedName.IndexOf("poly", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!hasDa80 && !hasBrand)
-                {
-                    continue;
-                }
-
-                int score = 0;
-                if (hasBrand) score += 6;
-                if (hasDa80) score += 14;
-                if (normalizedName.IndexOf("mic", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("microphone", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if (normalizedName.IndexOf("マイク", StringComparison.OrdinalIgnoreCase) >= 0) score += 8;
-                if ((device.State & 1) == 1) score += 1;
-
-                if (score > bestScore)
-                {
-                    best = device;
-                    bestScore = score;
-                }
-            }
-
-            return best;
-        }
-
-        private static string NormalizeDeviceNameForMatch(string source)
-        {
-            if (string.IsNullOrEmpty(source))
-            {
-                return string.Empty;
-            }
-
-            string normalized = source.Normalize(NormalizationForm.FormKC);
-            normalized = normalized.Replace("　", " ");
-            normalized = Regex.Replace(normalized, "[\\s\\-_/()\\[\\]\\.]", string.Empty);
-            return normalized.ToLowerInvariant();
+            return FindFirstMatch(EDataFlow.eCapture, new string[] { "Plantronics" });
         }
 
         private static bool ContainsAll(string source, string[] keywords)
@@ -1768,24 +1362,16 @@ namespace WindowsAudioSetup
 
         private static string GetStateLabel(int state)
         {
-            if ((state & 2) == 2) return "無効";
-            if ((state & 8) == 8) return "無効(未接続)";
-            if ((state & 4) == 4) return "無効(未接続)";
-            if ((state & 1) == 1) return "有効";
-            return "不明";
+            if ((state & 2) == 2) return "辟｡蜉ｹ";
+            if ((state & 8) == 8) return "辟｡蜉ｹ(譛ｪ謗･邯・";
+            if ((state & 4) == 4) return "辟｡蜉ｹ(譛ｪ謗･邯・";
+            if ((state & 1) == 1) return "譛牙柑";
+            return "荳肴・";
         }
 
         private void AppendLog(string message)
         {
             logBox.AppendText(message + Environment.NewLine);
-        }
-
-        private void AppendImportantLog(string message)
-        {
-            AppendLog("==============================================");
-            AppendLog("[重要] Voicemeeter 起動情報");
-            AppendLog(message);
-            AppendLog("==============================================");
         }
 
         private void AppendException(string title, Exception ex)
@@ -1825,7 +1411,7 @@ namespace WindowsAudioSetup
             Exception ex = e.ExceptionObject as Exception;
             if (ex == null)
             {
-                ex = new Exception("不明な例外が発生しました。");
+                ex = new Exception("荳肴・縺ｪ萓句､悶′逋ｺ逕溘＠縺ｾ縺励◆縲・);
             }
 
             ShowFatalError(ex);
@@ -1834,8 +1420,8 @@ namespace WindowsAudioSetup
         private static void ShowFatalError(Exception ex)
         {
             MessageBox.Show(
-                "ツールの起動または実行中にエラーが発生しました。\r\n\r\n" + ex.Message,
-                "Windows サウンド設定ツール",
+                "繝・・繝ｫ縺ｮ襍ｷ蜍輔∪縺溘・螳溯｡御ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆縲・r\n\r\n" + ex.Message,
+                "Windows 繧ｵ繧ｦ繝ｳ繝芽ｨｭ螳壹ヤ繝ｼ繝ｫ",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
