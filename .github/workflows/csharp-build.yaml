@@ -1,0 +1,41 @@
+name: Build C# Audio Setup (Dev & Prod)
+
+on: [push]
+
+jobs:
+  build:
+    name: Build ${{ matrix.label }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - label: Production
+            src: AudioSetupUI.cs
+            out: AudioSetupUIApp10.exe
+          - label: Development
+            src: AudioSetupUI_dev.cs
+            out: AudioSetupUIApp_dev.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find csc.exe
+        id: find-csc
+        shell: cmd
+        run: |
+          if exist "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" (
+            echo CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe>> %GITHUB_OUTPUT%
+          ) else (
+            echo CSC=C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe>> %GITHUB_OUTPUT%
+          )
+
+      - name: Compile ${{ matrix.src }}
+        shell: cmd
+        run: |
+          "${{ steps.find-csc.outputs.CSC }}" /nologo /target:winexe /platform:anycpu /optimize+ /out:${{ matrix.out }} /reference:System.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll ${{ matrix.src }}
+          if errorlevel 1 (
+            echo [FAIL] ${{ matrix.label }} build failed.
+            exit /b 1
+          )
+          echo [OK] ${{ matrix.label }} build succeeded.
